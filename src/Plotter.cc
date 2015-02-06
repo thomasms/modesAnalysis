@@ -63,6 +63,9 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
     TH1F hist_background  = sourcePtr->GetBackgroundSpectraHistVtr().at(_channel);
     TH1F hist_sigMinusBkg = sourcePtr->GetSMinusBSpectraHistVtr().at(_channel);
 
+    NormaliseHistogram(hist_signal);
+    NormaliseHistogram(hist_background);
+    
     SetupHistogram(hist_signal,1);
     PolishHistogram(hist_signal,"Q_{long}","Normalised count");
     cvs_channel_spectra->cd();
@@ -71,31 +74,24 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
     TString histname = sourcePtr->GetSignalName() + SPECTRAEXT + std::to_string(_channel);
     if(_savePlots)
         WriteToFile<TH1F>(hist_signal,histname,PLOTSFILENAME);
-
-    cvs_channel_spectra_2D->cd();
+    
+    cvs_channel_spectra_2D->cd()->SetTickx();
+    cvs_channel_spectra_2D->cd()->SetTicky();
     hist_signal_2D.DrawCopy("COLZ");
 
     if(showBackground)
     {
         SetupHistogram(hist_background,2);
-        cvs_channel_spectra->cd();
+        cvs_channel_spectra->cd()->SetTickx();
+        cvs_channel_spectra->cd()->SetTicky();
         hist_background.DrawCopy("SAME");
       
         histname = sourcePtr->GetBackgroundName() + SPECTRAEXT + std::to_string(_channel);
         if(_savePlots)
             WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
-
-        SetupHistogram(hist_sigMinusBkg,3);
-        //cvs_channel_spectra->cd();
-        //hist_sigMinusBkg.DrawCopy("SAME");
     }
-
-    std::cout << "\nChannel : " <<_channel << ", Temp: " << sourcePtr->GetTemperature()
-               << ", signal entries: " << hist_signal.GetEntries()
-               << " ,mean " << GetMean(hist_signal)
-               << ", background entries: " << GetNumberOfEntries(hist_background)
-               << " ,mean " << GetMean(hist_background)
-               << ", signal - background entries: " << hist_sigMinusBkg.GetEntries();
+    
+    PrintSpectraDetails(sourcePtr,_channel);
 }
 
 void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBackground)
@@ -117,38 +113,35 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
         TH2F hist_signal_2D = sourcePtr->GetSignalSpectra2DHistVtr().at(ch);
         TH1F hist_background = sourcePtr->GetBackgroundSpectraHistVtr().at(ch);
         TH1F hist_sigMinusBkg = sourcePtr->GetSMinusBSpectraHistVtr().at(ch);
-
+        
+        NormaliseHistogram(hist_signal);
+        NormaliseHistogram(hist_background);
+        
         SetupHistogram(hist_signal,1);
         PolishHistogram(hist_signal,"Q_{long}","Normalised count");
         cvs_channel_spectra->cd(ch+1);
-        hist_signal.DrawCopy("HIST");
+        if(hist_signal.GetEntries() >0)hist_signal.DrawCopy("HIST");
         
         TString histname = sourcePtr->GetSignalName() + SPECTRAEXT + std::to_string(ch);
         if(_savePlots)
             WriteToFile<TH1F>(hist_signal,histname,PLOTSFILENAME);
-
-        cvs_channel_spectra_2D->cd(ch+1);
+        
+        cvs_channel_spectra_2D->cd(ch+1)->SetTickx();
+        cvs_channel_spectra_2D->cd(ch+1)->SetTicky();
         hist_signal_2D.DrawCopy("COLZ");
 
         if(showBackground)
         {
-          SetupHistogram(hist_background,2);
-          cvs_channel_spectra->cd(ch+1);
-            hist_background.DrawCopy("SAME");
+            SetupHistogram(hist_background,2);
+            cvs_channel_spectra->cd(ch+1)->SetTickx();
+            cvs_channel_spectra->cd(ch+1)->SetTicky();
+            if(hist_background.GetEntries() >0)hist_background.DrawCopy("SAME");
  
             histname = sourcePtr->GetBackgroundName() + SPECTRAEXT + std::to_string(ch);
             if(_savePlots)WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
-
-            SetupHistogram(hist_sigMinusBkg,3);
-            //hist_sigMinusBkg.DrawCopy("SAME");
         }
-
-        std::cout<< "\nChannel : " <<ch << ", Temp: " << sourcePtr->GetTemperature()
-                << ", signal entries: " << hist_signal.GetEntries()
-                << " ,mean " << GetMean(hist_signal)
-                << ", background entries: " << GetNumberOfEntries(hist_background)
-                << " ,mean " << GetMean(hist_background)
-                << ", signal - background entries: " << hist_sigMinusBkg.GetEntries();
+        
+        PrintSpectraDetails(sourcePtr,ch);
     }
 }
 
@@ -170,7 +163,8 @@ void Plotter::DrawPsd(const std::shared_ptr<Source> sourcePtr,bool showBackgroun
         canvases.push_back(cvs_channel_psd);
     }
     
-    cvs_channel_psd->cd();
+    cvs_channel_psd->cd()->SetTickx();
+    cvs_channel_psd->cd()->SetTicky();
 
     if(_channel<0)
     {
@@ -184,7 +178,10 @@ void Plotter::DrawPsd(const std::shared_ptr<Source> sourcePtr,bool showBackgroun
   
     TH1F hist_signal     = sourcePtr->GetSignalPsdHistVtr().at(_channel);
     TH1F hist_background = sourcePtr->GetBackgroundPsdHistVtr().at(_channel);
-      
+    
+    NormaliseHistogram(hist_signal);
+    NormaliseHistogram(hist_background);
+    
     SetupHistogram(hist_signal,1);
     PolishHistogram(hist_signal,"(Q_{long} - Q_{short})/Q_{long}","Normalised count");
     hist_signal.DrawCopy("HIST");
@@ -201,12 +198,8 @@ void Plotter::DrawPsd(const std::shared_ptr<Source> sourcePtr,bool showBackgroun
         if(_savePlots)
             WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
     }
- 
-    std::cout<< "\nChannel : " <<_channel << ", Temp: " << sourcePtr->GetTemperature()
-                << ", signal entries: " << hist_signal.GetEntries()
-                << " ,mean " << GetMean(hist_signal)
-                << ", background entries: " << GetNumberOfEntries(hist_background)
-                << " ,mean " << GetMean(hist_background);
+    
+    PrintPSDDetails(sourcePtr,_channel);
 }
 
 void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackground)
@@ -226,10 +219,13 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
         TH1F hist_background = sourcePtr->GetBackgroundPsdHistVtr().at(ch);
       
         cvs_channel_psd->cd(ch+1);
-
+        
+        NormaliseHistogram(hist_signal);
+        NormaliseHistogram(hist_background);
+        
         SetupHistogram(hist_signal,1);
         PolishHistogram(hist_signal,"(Q_{long} - Q_{short})/Q_{long}","Normalised count");
-        hist_signal.DrawCopy("HIST");
+        if(hist_signal.GetEntries()>0)hist_signal.DrawCopy("HIST");
       
         TString histname = sourcePtr->GetSignalName() + PSDEXT + std::to_string(ch);
         if(_savePlots)
@@ -238,19 +234,16 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
         if(showBackground)
         {
             SetupHistogram(hist_background,2);
-            cvs_channel_psd->cd(ch+1);
-            hist_background.DrawCopy("SAME");
+            cvs_channel_psd->cd(ch+1)->SetTickx();
+            cvs_channel_psd->cd(ch+1)->SetTicky();
+            if(hist_background.GetEntries()>0)hist_background.DrawCopy("SAME");
  
             histname = sourcePtr->GetBackgroundName() + PSDEXT + std::to_string(ch);
             if(_savePlots)
                 WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
         }
-
-        std::cout << "\nChannel : " <<ch << ", Temp: " << sourcePtr->GetTemperature()
-                    << ", signal entries: " << hist_signal.GetEntries()
-                    << " ,mean " << GetMean(hist_signal)
-                    << ", background entries: " << GetNumberOfEntries(hist_background)
-                    << " ,mean " << GetMean(hist_background);
+        
+        PrintPSDDetails(sourcePtr,ch);
     }
 }
 
@@ -296,9 +289,13 @@ void Plotter::DrawFOM(const std::shared_ptr<Source> sourcePtr)
     SetupGraphs(sourcePtr, _channel);
     
     cvs_channel_fom->cd();
+    cvs_channel_fom->SetTickx();
+    cvs_channel_fom->SetTicky();
     g1_fom_s_b->Draw("AP");
     
     cvs_channel_eff->cd();
+    cvs_channel_eff->SetTickx();
+    cvs_channel_eff->SetTicky();
     g1_eff_s_b->Draw("AP");
     g1_pur_s_b->Draw("P");
     g1_effXpur_s_b->Draw("P");
@@ -325,11 +322,15 @@ void Plotter::DrawFOMAll(const std::shared_ptr<Source> sourcePtr)
     
     for(int ch=0;ch<size;ch++)
     {
-        cvs_channel_fom->cd(ch+1);
+        cvs_channel_fom->cd(ch+1)->SetTickx();
+        cvs_channel_fom->cd(ch+1)->SetTicky();
+        cvs_channel_fom->SetTickx();
+        cvs_channel_fom->SetTicky();
         SetupGraphs(sourcePtr, ch);
         g1_fom_s_b->Draw("AP");
         
-        cvs_channel_eff->cd(ch+1);
+        cvs_channel_eff->cd(ch+1)->SetTickx();
+        cvs_channel_eff->cd(ch+1)->SetTicky();
         g1_eff_s_b->Draw("AP");
         g1_pur_s_b->Draw("P");
         g1_effXpur_s_b->Draw("P");
@@ -354,8 +355,14 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     TH1F hist_signal     = sourcePtr->GetSignalPsdHistVtr().at(channel);
     TH1F hist_background = sourcePtr->GetBackgroundPsdHistVtr().at(channel);
     
-    NormaliseHistogram(hist_signal,1);
-    NormaliseHistogram(hist_background,1);
+    // Get entries before normalising
+    const int entriesSignal      = hist_signal.GetEntries();
+    const int entriesBackground  = hist_background.GetEntries();
+    
+    NormaliseHistogram(hist_signal);
+    NormaliseHistogram(hist_background);
+    //hist_signal.Scale(entriesBackground);
+    //hist_background.Scale(entriesSignal);
     
     double highestFOM = 0.0;
     double bestCut = 0.0;
@@ -388,10 +395,10 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
         xValue[bin]     = minXBin + (bin+0.5)*binWidth;
         xValue_err[bin] = binWidth*0.5;
         
-        BinaryResult fom     = GetFOM(hist_signal, hist_background,bin);
-        BinaryResult pur     = GetPurity(hist_signal,hist_background,bin);
-        BinaryResult eff     = GetEfficiency(hist_signal,bin);
-        BinaryResult effXpur = GetEffXPur(hist_signal,hist_background, bin);
+        BinaryResult fom     = GetFOM(hist_signal, hist_background, entriesSignal, entriesBackground, bin);
+        BinaryResult pur     = GetPurity(hist_signal,hist_background, entriesSignal, entriesBackground, bin);
+        BinaryResult eff     = GetEfficiency(hist_signal, entriesSignal, bin);
+        BinaryResult effXpur = GetEffXPur(hist_signal,hist_background, entriesSignal, entriesBackground, bin);
         
         if(fom.GetResult() == -1 || eff.GetResult() == -1 || pur.GetResult() == -1)
         {
@@ -498,7 +505,11 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
 
 }
 
-const BinaryResult Plotter::GetFOM(const TH1F& hist_signal, const TH1F& hist_background, int binMin)
+const BinaryResult Plotter::GetFOM(const TH1F& hist_signal,
+                                   const TH1F& hist_background,
+                                   const double signalEntries,
+                                   const double backgroundEntries,
+                                   int binMin)
 {
     int numberOfSignalBins      = hist_signal.GetNbinsX();
     int numberOfBackgroundBins  = hist_background.GetNbinsX();
@@ -508,20 +519,37 @@ const BinaryResult Plotter::GetFOM(const TH1F& hist_signal, const TH1F& hist_bac
     
     double integratedSignal = 0;
     double integratedBackground = 0;
+    double integratedSignalError = 0;
+    double integratedBackgroundError = 0;
     
     //binMin is the bin to cut on
     for(int bin=binMin;bin<numberOfSignalBins;bin++)
     {
         integratedSignal     += hist_signal.GetBinContent(bin+1);
         integratedBackground += hist_background.GetBinContent(bin+1);
+        
+        //errors
+        integratedSignalError += 1.0 / (TMath::Sqrt(hist_signal.GetBinContent(bin+1)*signalEntries));
+        integratedBackgroundError += 1.0 / (TMath::Sqrt(hist_background.GetBinContent(bin+1)*backgroundEntries));
     }
     
+    const double denominator = TMath::Sqrt(integratedSignal + integratedBackground);
+    const double denominatorError = (1.0 / (2.0*denominator))*TMath::Sqrt((integratedSignalError*integratedSignalError) +
+                                                                          (integratedBackgroundError*integratedBackgroundError));
+    
     //figure of merit
-    BinaryResult FOM = GetBinaryResult(integratedSignal, TMath::Sqrt(integratedSignal + integratedBackground));
+    BinaryResult FOM = GetBinaryResult(integratedSignal,
+                                       denominator,
+                                       integratedSignalError,
+                                       denominatorError);
     return FOM;
 }
 
-const BinaryResult Plotter::GetPurity(const TH1F& hist_signal, const TH1F& hist_background, int binMin)
+const BinaryResult Plotter::GetPurity(const TH1F& hist_signal,
+                                      const TH1F& hist_background,
+                                      const double signalEntries,
+                                      const double backgroundEntries,
+                                      int binMin)
 {
     int numberOfSignalBins      = hist_signal.GetNbinsX();
     int numberOfBackgroundBins  = hist_background.GetNbinsX();
@@ -531,39 +559,64 @@ const BinaryResult Plotter::GetPurity(const TH1F& hist_signal, const TH1F& hist_
     
     double integratedSignal = 0;
     double integratedBackground = 0;
+    double integratedSignalError = 0;
+    double integratedBackgroundError = 0;
     
     //binMin is the bin to cut on
     for(int bin=binMin;bin<numberOfSignalBins;bin++)
     {
         integratedSignal     += hist_signal.GetBinContent(bin+1);
         integratedBackground += hist_background.GetBinContent(bin+1);
+        
+        //errors
+        integratedSignalError += 1.0 / (TMath::Sqrt(hist_signal.GetBinContent(bin+1)*signalEntries));
+        integratedBackgroundError += 1.0 / (TMath::Sqrt(hist_background.GetBinContent(bin+1)*backgroundEntries));
     }
     
+    const double denominator = (integratedSignal + integratedBackground);
+    const double denominatorError = TMath::Sqrt((integratedSignalError*integratedSignalError) +
+                                                (integratedBackgroundError*integratedBackgroundError));
+    
     //purity
-    BinaryResult PUR = GetBinaryResult(integratedSignal, (integratedSignal + integratedBackground));
+    BinaryResult PUR = GetBinaryResult(integratedSignal,
+                                       denominator,
+                                       integratedSignalError,
+                                       denominatorError);
     return PUR;
 }
 
-const BinaryResult Plotter::GetEfficiency(const TH1F& hist_signal, int binMin)
+const BinaryResult Plotter::GetEfficiency(const TH1F& hist_signal,
+                                          const double signalEntries,
+                                          int binMin)
 {
     int numberOfSignalBins      = hist_signal.GetNbinsX();
     
     double integratedSignal = 0;
-    double totalSignal = hist_signal.Integral(0,numberOfSignalBins);
+    double integratedSignalError = 0;
+    const double totalSignal = hist_signal.Integral(0,numberOfSignalBins);
+    const double totalSignalError = TMath::Sqrt(totalSignal*signalEntries);
     
     //binMin is the bin to cut on
     for(int bin=binMin;bin<numberOfSignalBins;bin++)
     {
-        integratedSignal     += hist_signal.GetBinContent(bin+1);
+        integratedSignal      += hist_signal.GetBinContent(bin+1);
+        integratedSignalError += 1.0 / (TMath::Sqrt(hist_signal.GetBinContent(bin+1)*signalEntries));
     }
     
     //efficiency
-    BinaryResult EFF = GetBinaryResult(integratedSignal, totalSignal);
+    BinaryResult EFF = GetBinaryResult(integratedSignal,
+                                       totalSignal,
+                                       integratedSignalError,
+                                       totalSignalError);
     return EFF;
     
 }
 
-const BinaryResult Plotter::GetEffXPur(const TH1F& hist_signal, const TH1F& hist_background, int binMin)
+const BinaryResult Plotter::GetEffXPur(const TH1F& hist_signal,
+                                       const TH1F& hist_background,
+                                       const double signalEntries,
+                                       const double backgroundEntries,
+                                       int binMin)
 {
     int numberOfSignalBins      = hist_signal.GetNbinsX();
     int numberOfBackgroundBins  = hist_background.GetNbinsX();
@@ -583,44 +636,42 @@ const BinaryResult Plotter::GetEffXPur(const TH1F& hist_signal, const TH1F& hist
     }
     
     //efficiency
-    BinaryResult EFFxPUR = GetBinaryResult(integratedSignal*integratedSignal, totalSignal*(integratedSignal + integratedBackground));
+    BinaryResult EFFxPUR = GetBinaryResult(integratedSignal*integratedSignal,
+                                           totalSignal*(integratedSignal + integratedBackground),
+                                           1,
+                                           1);
     return EFFxPUR;
     
 }
 
-const BinaryResult Plotter::GetBinaryResult(const double numerator, const double denominator)
+const BinaryResult Plotter::GetBinaryResult(const double numerator,
+                                            const double denominator,
+                                            const double numeratorError,
+                                            const double denominatorError)
 {
-    //figure of merit
-    TH1F numeritorHist("numeritorHist","numeritorHist",1,0,1);
-    TH1F denominatorHist("denominatorHist","denominatorHist",1,0,1);
-    numeritorHist.SetBinContent(0,numerator);
-    denominatorHist.SetBinContent(0,denominator);
+    // Histograms for efficiency plots
+    //TH1F numeratorHist("numeratorHist","numeratorHist",1,0.0,1.0);
+    //TH1F denominatorHist("denominatorHist","denominatorHist",1,0.0,1.0);
+    
+    //scale factor
+    //const double numeratorScale     = numerator / (numeratorError*numeratorError);
+    //const double denominatorScale   = denominator / (denominatorError*denominatorError);
+    
+    //numeratorHist.SetBinContent(1,numerator);//*numeratorScale);
+    //denominatorHist.SetBinContent(1,denominator);//*denominatorScale);
+    //numeratorHist.SetBinError(0,numeratorError);//*numeratorScale);
+    //denominatorHist.SetBinError(0,denominatorError);//*denominatorScale);
     
     //calculate error
-    TGraphAsymmErrors error(&numeritorHist,&denominatorHist);
+    //TGraphAsymmErrors error(&numeratorHist,&denominatorHist);//,"n");
     
-    const double result     = numerator/denominator;
-    const double lowError   = error.GetErrorYlow(0);
-    const double highError  = error.GetErrorYhigh(0);
+    const double result     = numerator / denominator;//error.Eval(0.5);
+    const double lowError   = 0.;//TMath::Sqrt( (numeratorError*numeratorError)/(numerator*numerator) +
+                                   //        (denominatorError*denominatorError)/(denominator*denominator)); //error.GetErrorYlow(0);
+    const double highError  = lowError;//error.GetErrorYhigh(0);
     
     BinaryResult binaryResult(result, lowError, highError);
     return binaryResult;
-}
-
-const double Plotter::GetMean(const TH1F& hist) const
-{
-    double total = 0.;
-    for(int bin=1;bin<hist.GetNbinsX();bin++)
-    {      
-        total += hist.GetXaxis()->GetBinCenter(bin);
-    }
-
-    return total/static_cast<double>(hist.GetEntries());
-}
-
-const int Plotter::GetNumberOfEntries(const TH1F& hist) const
-{
-  return hist.GetEntries();
 }
 
 void Plotter::ResetCanvases()
@@ -651,8 +702,6 @@ const int Plotter::FindCanvas(const TString& name)
 void Plotter::SetupHistogram(TH1F& hist,int option)
 {
 
-  NormaliseHistogram(hist);
-
   hist.SetLineStyle(1);
   hist.SetOption("HIST");
 
@@ -676,25 +725,14 @@ void Plotter::SetupHistogram(TH1F& hist,int option)
     }
 }
 
-//normalise histograms
-void Plotter::NormaliseHistogram(TH1F& hist,int entries)
+//normalise histograms by entries
+void Plotter::NormaliseHistogram(TH1F& hist)
 {  
-  double factor = 1.0;
+    double factor = 1.0;
+    factor = static_cast<double>(hist.GetEntries());
+    hist.Scale(1.0/factor);
 
-  if(entries > 1)
-    {
-      factor = static_cast<double>(entries);
-    }
-  else
-    {
-      factor = static_cast<double>(hist.GetEntries());
-    }
-
-  if(factor >0)
-  {
-	SetErrorBars(hist,factor);
-	hist.Scale(1/factor);
-  }
+    //SetErrorBars(hist,factor);
 }
 
 void Plotter::SetErrorBars(TH1F& hist, const double scale)
@@ -725,4 +763,22 @@ void Plotter::PolishHistogram(TH1F& hist,const TString xtitle,const TString ytit
   hist.GetYaxis()->SetTitleOffset(1.0);
   hist.GetYaxis()->SetLabelSize(0.04);
   hist.GetYaxis()->SetTitleSize(0.042);
+}
+
+void Plotter::PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int channel)
+{
+    std::cout   << "\nChannel : " << channel << ", Temp: " << sourcePtr->GetTemperature()
+    << ", Signal Entries: " << sourcePtr->GetSignalSpectraHistVtr().at(channel).GetEntries()
+    << ", Signal Spectra Mean " << sourcePtr->GetSignalSpectraHistVtr().at(channel).GetMean()
+    << ", Background Entries: " << sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetEntries()
+    << ", Background Spectra Mean " << sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetEntries();
+}
+
+void Plotter::PrintPSDDetails(const std::shared_ptr<Source> sourcePtr, int channel)
+{
+    std::cout   << "\nChannel : " << channel << ", Temp: " << sourcePtr->GetTemperature()
+    << ", Signal Entries: " << sourcePtr->GetSignalPsdHistVtr().at(channel).GetEntries()
+    << ", Signal PSD Mean " << sourcePtr->GetSignalPsdHistVtr().at(channel).GetMean()
+    << ", Background Entries: " << sourcePtr->GetBackgroundPsdHistVtr().at(channel).GetEntries()
+    << ", Background PSD Mean " << sourcePtr->GetBackgroundPsdHistVtr().at(channel).GetEntries();
 }

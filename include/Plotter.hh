@@ -45,23 +45,40 @@ public:
     
 private:
     
-    const int              GetNumberOfEntries(const TH1F& hist) const;
-    const double           GetMean(const TH1F& hist) const;
-    const BinaryResult     GetFOM(const TH1F& hist_signal, const TH1F& hist_background, int binMin);
-    const BinaryResult     GetPurity(const TH1F& hist_signal, const TH1F& hist_background, int binMin);
-    const BinaryResult     GetEfficiency(const TH1F& hist_signal, int binMin);
-    const BinaryResult     GetEffXPur(const TH1F& hist_signal, const TH1F& hist_background, int binMin);
+    const BinaryResult     GetFOM(const TH1F& hist_signal,
+                                  const TH1F& hist_background,
+                                  const double signalEntries,
+                                  const double backgroundEntries,
+                                  int binMin);
+    const BinaryResult     GetPurity(const TH1F& hist_signal,
+                                     const TH1F& hist_background,
+                                     const double signalEntries,
+                                     const double backgroundEntries,
+                                     int binMin);
+    const BinaryResult     GetEfficiency(const TH1F& hist_signal,
+                                         const double signalEntries,
+                                         int binMin);
+    const BinaryResult     GetEffXPur(const TH1F& hist_signal,
+                                      const TH1F& hist_background,
+                                      const double signalEntries,
+                                      const double backgroundEntries,
+                                      int binMin);
     
     const int FindCanvas(const TString& name);
     void SetupHistogram(TH1F& hist,int option);
     void SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel);
     void WriteGraphs(const std::shared_ptr<Source> sourcePtr, int channel);
     void ResetCanvases();
-    void NormaliseHistogram(TH1F& hist,int entries=1);
+    void NormaliseHistogram(TH1F& hist);
     void SetErrorBars(TH1F& hist, const double scale);
     void PolishHistogram(TH1F& hist,const TString xtitle,const TString ytitle);
+    void PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int channel);
+    void PrintPSDDetails(const std::shared_ptr<Source> sourcePtr, int channel);
     
-    const BinaryResult GetBinaryResult(const double numerator, const double denominator);
+    const BinaryResult GetBinaryResult(const double numerator,
+                                       const double denominator,
+                                       const double numeratorError,
+                                       const double denominatorError);
     template<class T>
     void WriteToFile(const T& hist,const TString histname,const TString filename)
     {
