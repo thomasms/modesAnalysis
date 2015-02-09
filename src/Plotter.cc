@@ -731,8 +731,7 @@ void Plotter::NormaliseHistogram(TH1F& hist)
     double factor = 1.0;
     factor = static_cast<double>(hist.GetEntries());
     hist.Scale(1.0/factor);
-
-    //SetErrorBars(hist,factor);
+    SetErrorBars(hist,factor);
 }
 
 void Plotter::SetErrorBars(TH1F& hist, const double scale)
@@ -771,7 +770,7 @@ void Plotter::PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int c
     << ", Signal Entries: " << sourcePtr->GetSignalSpectraHistVtr().at(channel).GetEntries()
     << ", Signal Spectra Mean " << sourcePtr->GetSignalSpectraHistVtr().at(channel).GetMean()
     << ", Background Entries: " << sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetEntries()
-    << ", Background Spectra Mean " << sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetEntries();
+    << ", Background Spectra Mean " << sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetMean();
 }
 
 void Plotter::PrintPSDDetails(const std::shared_ptr<Source> sourcePtr, int channel)
@@ -780,5 +779,5 @@ void Plotter::PrintPSDDetails(const std::shared_ptr<Source> sourcePtr, int chann
     << ", Signal Entries: " << sourcePtr->GetSignalPsdHistVtr().at(channel).GetEntries()
     << ", Signal PSD Mean " << sourcePtr->GetSignalPsdHistVtr().at(channel).GetMean()
     << ", Background Entries: " << sourcePtr->GetBackgroundPsdHistVtr().at(channel).GetEntries()
-    << ", Background PSD Mean " << sourcePtr->GetBackgroundPsdHistVtr().at(channel).GetEntries();
+    << ", Background PSD Mean " << sourcePtr->GetBackgroundPsdHistVtr().at(channel).GetMean();
 }
