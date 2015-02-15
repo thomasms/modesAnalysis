@@ -387,9 +387,11 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     double yValue_effXpur_lowErr[numberOfBins];
     double yValue_effXpur_highErr[numberOfBins];
     
-    //loop over histgram bins to get bin values
+    //loop over histogram bins to get bin values
     for(int bin=0;bin<numberOfBins;bin++)
     {
+        std::cout << "\nSignal entries in bin     " << bin << " : \t\t" << hist_signal.GetBinContent(bin+1)*entriesSignal;
+        std::cout << "\nBackground entries in bin " << bin << " : \t\t" << hist_background.GetBinContent(bin+1)*entriesBackground;
         double binWidth = hist_signal.GetBinWidth(0);
         
         xValue[bin]     = minXBin + (bin+0.5)*binWidth;
@@ -517,30 +519,34 @@ const BinaryResult Plotter::GetFOM(const TH1F& hist_signal,
     //check they have the same binning
     if(numberOfSignalBins != numberOfBackgroundBins)return BinaryResult(-1,0,0);
     
-    double integratedSignal = 0;
-    double integratedBackground = 0;
-    double integratedSignalError = 0;
-    double integratedBackgroundError = 0;
+    double integratedSignal          = 0.0;
+    double integratedBackground      = 0.0;
+    double integratedSignalError     = 0.0;
+    double integratedBackgroundError = 0.0;
+    double numeratorError            = 0.0;
+    double denominatorError          = 0.0;
     
     //binMin is the bin to cut on
     for(int bin=binMin;bin<numberOfSignalBins;bin++)
     {
         integratedSignal     += hist_signal.GetBinContent(bin+1);
         integratedBackground += hist_background.GetBinContent(bin+1);
-        
-        //errors
-        integratedSignalError += 1.0 / (TMath::Sqrt(hist_signal.GetBinContent(bin+1)*signalEntries));
-        integratedBackgroundError += 1.0 / (TMath::Sqrt(hist_background.GetBinContent(bin+1)*backgroundEntries));
     }
     
     const double denominator = TMath::Sqrt(integratedSignal + integratedBackground);
-    const double denominatorError = (1.0 / (2.0*denominator))*TMath::Sqrt((integratedSignalError*integratedSignalError) +
-                                                                          (integratedBackgroundError*integratedBackgroundError));
+    
+    //errors
+    integratedSignalError     = TMath::Sqrt(integratedSignal/static_cast<double>(signalEntries));
+    integratedBackgroundError = TMath::Sqrt(integratedBackground/static_cast<double>(backgroundEntries));
+    numeratorError            = integratedSignalError;
+    denominatorError          = ( TMath::Sqrt(integratedSignalError*integratedSignalError + integratedBackgroundError*integratedBackgroundError)/
+                                 (2.0*denominator) );
+    
     
     //figure of merit
     BinaryResult FOM = GetBinaryResult(integratedSignal,
                                        denominator,
-                                       integratedSignalError,
+                                       numeratorError,
                                        denominatorError);
     return FOM;
 }
@@ -567,11 +573,11 @@ const BinaryResult Plotter::GetPurity(const TH1F& hist_signal,
     {
         integratedSignal     += hist_signal.GetBinContent(bin+1);
         integratedBackground += hist_background.GetBinContent(bin+1);
-        
-        //errors
-        integratedSignalError += 1.0 / (TMath::Sqrt(hist_signal.GetBinContent(bin+1)*signalEntries));
-        integratedBackgroundError += 1.0 / (TMath::Sqrt(hist_background.GetBinContent(bin+1)*backgroundEntries));
     }
+    
+    //errors
+    integratedSignalError     = TMath::Sqrt(integratedSignal/static_cast<double>(signalEntries));
+    integratedBackgroundError = TMath::Sqrt(integratedBackground/static_cast<double>(backgroundEntries));
     
     const double denominator = (integratedSignal + integratedBackground);
     const double denominatorError = TMath::Sqrt((integratedSignalError*integratedSignalError) +
@@ -594,14 +600,17 @@ const BinaryResult Plotter::GetEfficiency(const TH1F& hist_signal,
     double integratedSignal = 0;
     double integratedSignalError = 0;
     const double totalSignal = hist_signal.Integral(0,numberOfSignalBins);
-    const double totalSignalError = TMath::Sqrt(totalSignal*signalEntries);
+    double totalSignalError = 0.0;
     
     //binMin is the bin to cut on
     for(int bin=binMin;bin<numberOfSignalBins;bin++)
     {
         integratedSignal      += hist_signal.GetBinContent(bin+1);
-        integratedSignalError += 1.0 / (TMath::Sqrt(hist_signal.GetBinContent(bin+1)*signalEntries));
     }
+    
+    //errors
+    integratedSignalError = TMath::Sqrt(integratedSignalError/static_cast<double>(signalEntries));
+    totalSignalError      = TMath::Sqrt(totalSignalError/static_cast<double>(signalEntries));
     
     //efficiency
     BinaryResult EFF = GetBinaryResult(integratedSignal,
@@ -624,22 +633,36 @@ const BinaryResult Plotter::GetEffXPur(const TH1F& hist_signal,
     //check they have the same binning
     if(numberOfSignalBins != numberOfBackgroundBins)return BinaryResult(-1,0,0);
     
-    double integratedSignal     = 0;
-    double integratedBackground = 0;
-    double totalSignal          = hist_signal.Integral(0,numberOfSignalBins);
+    double integratedSignal          = 0;
+    double integratedBackground      = 0;
+    double integratedSignalError     = 0;
+    double integratedBackgroundError = 0;
+    double totalSignal               = hist_signal.Integral(0,numberOfSignalBins);
+    double totalSignalError          = 0.0;
+    double numeratorError            = 0.0;
+    double denominatorError          = 0.0;
     
     //binMin is the bin to cut on
     for(int bin=binMin;bin<numberOfSignalBins;bin++)
     {
-        integratedSignal     += hist_signal.GetBinContent(bin+1);
-        integratedBackground += hist_background.GetBinContent(bin+1);
+        integratedSignal      += hist_signal.GetBinContent(bin+1);
+        integratedBackground  += hist_background.GetBinContent(bin+1);
     }
+    
+    //errors
+    totalSignalError          = TMath::Sqrt(totalSignalError/static_cast<double>(signalEntries));
+    integratedSignalError     = TMath::Sqrt(integratedSignal/static_cast<double>(signalEntries));
+    integratedBackgroundError = TMath::Sqrt(integratedBackground/static_cast<double>(backgroundEntries));
+    numeratorError            = 2.0*integratedSignal*integratedSignalError;
+    denominatorError          = TMath::Sqrt( ((totalSignalError*totalSignalError)/(totalSignal*totalSignal)) +
+                                             (((integratedSignalError*integratedSignalError) + (integratedBackgroundError*integratedBackgroundError)) /
+                                            TMath::Power( (integratedSignal + integratedBackground) ,2)) );
     
     //efficiency
     BinaryResult EFFxPUR = GetBinaryResult(integratedSignal*integratedSignal,
                                            totalSignal*(integratedSignal + integratedBackground),
-                                           1,
-                                           1);
+                                           numeratorError,
+                                           denominatorError);
     return EFFxPUR;
     
 }
@@ -666,8 +689,8 @@ const BinaryResult Plotter::GetBinaryResult(const double numerator,
     //TGraphAsymmErrors error(&numeratorHist,&denominatorHist);//,"n");
     
     const double result     = numerator / denominator;//error.Eval(0.5);
-    const double lowError   = 0.;//TMath::Sqrt( (numeratorError*numeratorError)/(numerator*numerator) +
-                                   //        (denominatorError*denominatorError)/(denominator*denominator)); //error.GetErrorYlow(0);
+    const double lowError   = result*TMath::Sqrt( (numeratorError*numeratorError)/(numerator*numerator) +
+                                           (denominatorError*denominatorError)/(denominator*denominator)); //error.GetErrorYlow(0);
     const double highError  = lowError;//error.GetErrorYhigh(0);
     
     BinaryResult binaryResult(result, lowError, highError);
