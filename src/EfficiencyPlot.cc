@@ -45,7 +45,7 @@ const double EfficiencyPlot::GetEfficiency(const int bin)
 
 const double EfficiencyPlot::GetEfficiencyError(const int bin)
 {
-    double nEntriesInBin = _hist.GetBinContent(bin)*_nEntries;
+    int nEntriesInBin = _hist.GetBinContent(bin)*_nEntries;
     
     //use binomial errors
     const double eff = GetEfficiency(bin);
@@ -54,7 +54,7 @@ const double EfficiencyPlot::GetEfficiencyError(const int bin)
     return result;
 }
 
-void EfficiencyPlot::Calculate()
+void EfficiencyPlot::CalculateUsingBinomial()
 {
     double minXBin      = _hist.GetXaxis()->GetXmin();
     double maxXBin      = _hist.GetXaxis()->GetXmax();
@@ -70,6 +70,33 @@ void EfficiencyPlot::Calculate()
         _yValueErrorsLow[bin]       = GetEfficiencyError(bin);
         _yValueErrorsHigh[bin]      = GetEfficiencyError(bin);
     }
+}
+
+void EfficiencyPlot::CalculateUsingRoot()
+{
+    double minXBin      = _hist.GetXaxis()->GetXmin();
+    double maxXBin      = _hist.GetXaxis()->GetXmax();
+    
+    TH1F passHist("passHist","passHist",_nBins, minXBin,maxXBin);
+    TH1F totalHist("totalHist","totalHist",_nBins, minXBin,maxXBin);
+        
+    //loop over histogram bins to set bin values
+    for(int bin=0;bin<_nBins;bin++)
+    {
+        int nEntriesInBin   = _hist.GetBinContent(bin)*_nEntries;
+        
+        passHist.SetBinContent(bin,static_cast<int>(GetEfficiency(bin)*nEntriesInBin));
+        totalHist.SetBinContent(bin,nEntriesInBin);
+    }
+    
+    TGraphAsymmErrors* graph = new TGraphAsymmErrors(&passHist,&totalHist);
+    std::copy(graph->GetX(),graph->GetX() +_nBins,&_xValues[0]);
+    std::copy(graph->GetY(),graph->GetY() +_nBins,&_yValues[0]);
+    std::copy(graph->GetEXlow(),graph->GetEXlow() +_nBins,&_xValueErrors[0]);
+    std::copy(graph->GetEYlow(),graph->GetEYlow() +_nBins,&_yValueErrorsLow[0]);
+    std::copy(graph->GetEYhigh(),graph->GetEYhigh() +_nBins,&_yValueErrorsHigh[0]);
+    
+    delete graph;
 }
 
 TGraphAsymmErrors* EfficiencyPlot::GetEfficiencyGraphCopy()

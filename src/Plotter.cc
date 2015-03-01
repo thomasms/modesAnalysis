@@ -439,7 +439,8 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     //Efficiency
     EfficiencyPlot eff(hist_signal,entriesSignal);
     eff.Init();
-    eff.Calculate();
+    //eff.CalculateUsingBinomial();
+    eff.CalculateUsingRoot();
     
     if(!g1_eff_s_b)delete g1_eff_s_b;
     g1_eff_s_b      = eff.GetEfficiencyGraphCopy();

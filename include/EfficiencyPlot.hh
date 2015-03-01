@@ -2,6 +2,7 @@
 #define EFFICIENCY_PLOT_HH
 
 #include <iostream>
+#include <algorithm>    // std::copy
 
 #include "TTree.h"
 #include "TLine.h"
@@ -21,7 +22,8 @@ public:
     ~EfficiencyPlot();
     
     void Init();
-    void Calculate();
+    void CalculateUsingBinomial();
+    void CalculateUsingRoot();
     
     TGraphAsymmErrors* GetEfficiencyGraphCopy();
     
