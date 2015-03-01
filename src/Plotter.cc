@@ -361,8 +361,6 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     
     NormaliseHistogram(hist_signal);
     NormaliseHistogram(hist_background);
-    //hist_signal.Scale(entriesBackground);
-    //hist_background.Scale(entriesSignal);
     
     double highestFOM = 0.0;
     double bestCut = 0.0;
@@ -377,9 +375,6 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     double yValue_fom[numberOfBins];
     double yValue_fom_lowErr[numberOfBins];
     double yValue_fom_highErr[numberOfBins];
-    double yValue_eff[numberOfBins];
-    double yValue_eff_lowErr[numberOfBins];
-    double yValue_eff_highErr[numberOfBins];
     double yValue_pur[numberOfBins];
     double yValue_pur_lowErr[numberOfBins];
     double yValue_pur_highErr[numberOfBins];
@@ -399,10 +394,9 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
         
         BinaryResult fom     = GetFOM(hist_signal, hist_background, entriesSignal, entriesBackground, bin);
         BinaryResult pur     = GetPurity(hist_signal,hist_background, entriesSignal, entriesBackground, bin);
-        BinaryResult eff     = GetEfficiency(hist_signal, entriesSignal, bin);
         BinaryResult effXpur = GetEffXPur(hist_signal,hist_background, entriesSignal, entriesBackground, bin);
         
-        if(fom.GetResult() == -1 || eff.GetResult() == -1 || pur.GetResult() == -1)
+        if(fom.GetResult() == -1 || pur.GetResult() == -1)
         {
             std::cout << "\n\nError! Number of bins do not match both histograms, please check code.\n" <<std::endl;
             return;
@@ -418,9 +412,6 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
         yValue_fom[bin]             = fom.GetResult();
         yValue_fom_lowErr[bin]      = fom.GetLowError();
         yValue_fom_highErr[bin]     = fom.GetHighError();
-        yValue_eff[bin]             = eff.GetResult();
-        yValue_eff_lowErr[bin]      = eff.GetLowError();
-        yValue_eff_highErr[bin]     = eff.GetHighError();
         yValue_pur[bin]             = pur.GetResult();
         yValue_pur_lowErr[bin]      = pur.GetLowError();
         yValue_pur_highErr[bin]     = pur.GetHighError();
@@ -445,14 +436,15 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
                                             &yValue_fom_highErr[0]);
     g1_fom_s_b->SetTitle("FOM");
     
+    //Efficiency
+    EfficiencyPlot eff(hist_signal,entriesSignal);
+    eff.Init();
+    eff.Calculate();
+    
     if(!g1_eff_s_b)delete g1_eff_s_b;
-    g1_eff_s_b      = new TGraphAsymmErrors(numberOfBins,
-                                            &xValue[0],
-                                            &yValue_eff[0],
-                                            &xValue_err[0],
-                                            &xValue_err[0],
-                                            &yValue_eff_lowErr[0],
-                                            &yValue_eff_highErr[0]);
+    g1_eff_s_b      = eff.GetEfficiencyGraphCopy();
+    
+    
     g1_eff_s_b->SetTitle("EFF");
     
     if(!g1_pur_s_b)delete g1_pur_s_b;
@@ -751,8 +743,7 @@ void Plotter::SetupHistogram(TH1F& hist,int option)
 //normalise histograms by entries
 void Plotter::NormaliseHistogram(TH1F& hist)
 {  
-    double factor = 1.0;
-    factor = static_cast<double>(hist.GetEntries());
+    double factor = static_cast<double>(hist.GetEntries());
     hist.Scale(1.0/factor);
     SetErrorBars(hist,factor);
 }

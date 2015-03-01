@@ -34,8 +34,9 @@ SOURCE3 = DataCardsRecord
 SOURCE4 = DataCards
 SOURCE5 = Manager
 SOURCE6 = Handler
+SOURCE7 = EfficiencyPlot
 
-OBJ = $(SOURCE1).o $(SOURCE2).o $(SOURCE3).o $(SOURCE4).o $(SOURCE5).o $(SOURCE6).o
+OBJ = $(SOURCE1).o $(SOURCE2).o $(SOURCE3).o $(SOURCE4).o $(SOURCE5).o $(SOURCE6).o $(SOURCE7).o
 OBJS = $(addprefix $(ODIR)/,$(OBJ))
 
 #define root system location

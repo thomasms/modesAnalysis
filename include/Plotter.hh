@@ -27,6 +27,7 @@
 #include "TRandom3.h"
 
 #include "dataLib.hh"
+#include "EfficiencyPlot.hh"
 
 class Plotter
 {
