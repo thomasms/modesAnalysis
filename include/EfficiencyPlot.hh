@@ -14,34 +14,27 @@
 #include "TMath.h"
 #include "TSystem.h"
 
+#include "BasePlot.hh"
 #include "dataLib.hh"
-class EfficiencyPlot
+
+class EfficiencyPlot : public BasePlot
 {
 public:
     EfficiencyPlot(const TH1F& hist1, const int nEntries);
-    ~EfficiencyPlot();
+    virtual ~EfficiencyPlot();
     
     void Init();
     void CalculateUsingBinomial();
     void CalculateUsingRoot();
-    
-    TGraphAsymmErrors* GetEfficiencyGraphCopy();
-    
+        
     const double GetEfficiency(const int bin);
     const double GetEfficiencyError(const int bin);
     
 private:
     TH1F _hist;
     
-    int _nBins;
     int _nEntries;
     double _totalSignal;
-    
-    double* _xValues;
-    double* _xValueErrors;
-    double* _yValues;
-    double* _yValueErrorsLow;
-    double* _yValueErrorsHigh;
 
 };
 

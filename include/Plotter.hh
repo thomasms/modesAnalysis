@@ -28,6 +28,7 @@
 
 #include "dataLib.hh"
 #include "EfficiencyPlot.hh"
+#include "PurityPlot.hh"
 
 class Plotter
 {
@@ -51,14 +52,6 @@ private:
                                   const double signalEntries,
                                   const double backgroundEntries,
                                   int binMin);
-    const BinaryResult     GetPurity(const TH1F& hist_signal,
-                                     const TH1F& hist_background,
-                                     const double signalEntries,
-                                     const double backgroundEntries,
-                                     int binMin);
-    const BinaryResult     GetEfficiency(const TH1F& hist_signal,
-                                         const double signalEntries,
-                                         int binMin);
     const BinaryResult     GetEffXPur(const TH1F& hist_signal,
                                       const TH1F& hist_background,
                                       const double signalEntries,

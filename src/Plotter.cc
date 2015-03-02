@@ -375,9 +375,6 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     double yValue_fom[numberOfBins];
     double yValue_fom_lowErr[numberOfBins];
     double yValue_fom_highErr[numberOfBins];
-    double yValue_pur[numberOfBins];
-    double yValue_pur_lowErr[numberOfBins];
-    double yValue_pur_highErr[numberOfBins];
     double yValue_effXpur[numberOfBins];
     double yValue_effXpur_lowErr[numberOfBins];
     double yValue_effXpur_highErr[numberOfBins];
@@ -393,10 +390,9 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
         xValue_err[bin] = binWidth*0.5;
         
         BinaryResult fom     = GetFOM(hist_signal, hist_background, entriesSignal, entriesBackground, bin);
-        BinaryResult pur     = GetPurity(hist_signal,hist_background, entriesSignal, entriesBackground, bin);
         BinaryResult effXpur = GetEffXPur(hist_signal,hist_background, entriesSignal, entriesBackground, bin);
         
-        if(fom.GetResult() == -1 || pur.GetResult() == -1)
+        if(fom.GetResult() == -1)
         {
             std::cout << "\n\nError! Number of bins do not match both histograms, please check code.\n" <<std::endl;
             return;
@@ -412,9 +408,6 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
         yValue_fom[bin]             = fom.GetResult();
         yValue_fom_lowErr[bin]      = fom.GetLowError();
         yValue_fom_highErr[bin]     = fom.GetHighError();
-        yValue_pur[bin]             = pur.GetResult();
-        yValue_pur_lowErr[bin]      = pur.GetLowError();
-        yValue_pur_highErr[bin]     = pur.GetHighError();
         yValue_effXpur[bin]         = effXpur.GetResult();
         yValue_effXpur_lowErr[bin]  = effXpur.GetLowError();
         yValue_effXpur_highErr[bin] = effXpur.GetHighError();
@@ -441,21 +434,16 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     eff.Init();
     //eff.CalculateUsingBinomial();
     eff.CalculateUsingRoot();
-    
     if(!g1_eff_s_b)delete g1_eff_s_b;
-    g1_eff_s_b      = eff.GetEfficiencyGraphCopy();
-    
-    
+    g1_eff_s_b      = eff.GetGraphCopy();
     g1_eff_s_b->SetTitle("EFF");
     
+    // Purity
+    PurityPlot pur(hist_signal,hist_background,entriesSignal,entriesBackground);
+    pur.Init();
+    pur.Calculate();
     if(!g1_pur_s_b)delete g1_pur_s_b;
-    g1_pur_s_b      = new TGraphAsymmErrors(numberOfBins,
-                                            &xValue[0],
-                                            &yValue_pur[0],
-                                            &xValue_err[0],
-                                            &xValue_err[0],
-                                            &yValue_pur_lowErr[0],
-                                            &yValue_pur_highErr[0]);
+    g1_pur_s_b      = pur.GetGraphCopy();
     g1_pur_s_b->SetTitle("PUR");
     
     if(!g1_effXpur_s_b)delete g1_effXpur_s_b;
@@ -474,14 +462,16 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     g1_fom_s_b->GetXaxis()->SetTitle("(QLong - QShort)/QLong");
     g1_fom_s_b->GetYaxis()->SetTitle("s / #sqrt{s+b}");
     g1_fom_s_b->GetYaxis()->SetTitleOffset(1.4);
-    g1_fom_s_b->GetYaxis()->SetRangeUser(minXBin,maxXBin);
+    g1_fom_s_b->GetXaxis()->SetRangeUser(minXBin,maxXBin);
+    g1_fom_s_b->GetYaxis()->SetRangeUser(0,1);
     g1_fom_s_b->SetMarkerStyle(24);
     g1_fom_s_b->SetMarkerSize(0.5);
     
     //graphs for efficencies and purities
     g1_eff_s_b->SetTitle(Form("Efficiency and Purity for channel %i",channel));
     g1_eff_s_b->GetXaxis()->SetTitle("(QLong - QShort)/QLong");
-    g1_eff_s_b->GetYaxis()->SetRangeUser(minXBin,maxXBin);
+    g1_eff_s_b->GetXaxis()->SetRangeUser(minXBin,maxXBin);
+    g1_eff_s_b->GetYaxis()->SetRangeUser(0,1);
     g1_eff_s_b->SetMarkerStyle(24);
     g1_eff_s_b->SetMarkerSize(0.5);
     g1_pur_s_b->SetMarkerStyle(24);
@@ -542,76 +532,6 @@ const BinaryResult Plotter::GetFOM(const TH1F& hist_signal,
                                        numeratorError,
                                        denominatorError);
     return FOM;
-}
-
-const BinaryResult Plotter::GetPurity(const TH1F& hist_signal,
-                                      const TH1F& hist_background,
-                                      const double signalEntries,
-                                      const double backgroundEntries,
-                                      int binMin)
-{
-    int numberOfSignalBins      = hist_signal.GetNbinsX();
-    int numberOfBackgroundBins  = hist_background.GetNbinsX();
-    
-    //check they have the same binning
-    if(numberOfSignalBins != numberOfBackgroundBins)return BinaryResult(-1,0,0);
-    
-    double integratedSignal = 0;
-    double integratedBackground = 0;
-    double integratedSignalError = 0;
-    double integratedBackgroundError = 0;
-    
-    //binMin is the bin to cut on
-    for(int bin=binMin;bin<numberOfSignalBins;bin++)
-    {
-        integratedSignal     += hist_signal.GetBinContent(bin+1);
-        integratedBackground += hist_background.GetBinContent(bin+1);
-    }
-    
-    //errors
-    integratedSignalError     = TMath::Sqrt(integratedSignal/static_cast<double>(signalEntries));
-    integratedBackgroundError = TMath::Sqrt(integratedBackground/static_cast<double>(backgroundEntries));
-    
-    const double denominator = (integratedSignal + integratedBackground);
-    const double denominatorError = TMath::Sqrt((integratedSignalError*integratedSignalError) +
-                                                (integratedBackgroundError*integratedBackgroundError));
-    
-    //purity
-    BinaryResult PUR = GetBinaryResult(integratedSignal,
-                                       denominator,
-                                       integratedSignalError,
-                                       denominatorError);
-    return PUR;
-}
-
-const BinaryResult Plotter::GetEfficiency(const TH1F& hist_signal,
-                                          const double signalEntries,
-                                          int binMin)
-{
-    int numberOfSignalBins      = hist_signal.GetNbinsX();
-    
-    double integratedSignal = 0;
-    double integratedSignalError = 0;
-    const double totalSignal = hist_signal.Integral(0,numberOfSignalBins);
-    double totalSignalError = 0.0;
-    
-    //binMin is the bin to cut on
-    for(int bin=binMin;bin<numberOfSignalBins;bin++)
-    {
-        integratedSignal      += hist_signal.GetBinContent(bin+1);
-    }
-    
-    //errors
-    integratedSignalError = TMath::Sqrt(integratedSignalError/static_cast<double>(signalEntries));
-    totalSignalError      = TMath::Sqrt(totalSignalError/static_cast<double>(signalEntries));
-    
-    //efficiency
-    BinaryResult EFF = GetBinaryResult(integratedSignal,
-                                       totalSignal,
-                                       integratedSignalError,
-                                       totalSignalError);
-    return EFF;
-    
 }
 
 const BinaryResult Plotter::GetEffXPur(const TH1F& hist_signal,
