@@ -47,14 +47,14 @@ const double PurityPlot::GetPurityError(const int bin)
     const double integratedSignal     = GetIntegratedSignal(bin);
     const double integratedBackground = GetIntegratedBackground(bin);
     
-    const double integratedSignalError = TMath::Sqrt(integratedSignal*alphaSignal);
-    const double integratedBackgroundError = TMath::Sqrt(integratedBackground*alphaBackground);
+    const double integratedSignalError     = GetIntegratedSignalError(bin);
+    const double integratedBackgroundError = GetIntegratedBackgroundError(bin);
     
-    const double result =
-        (1.0/(integratedBackground*TMath::Power( (1 + (integratedSignal/integratedBackground)) ,2)))*
-         TMath::Sqrt( (integratedSignalError*integratedSignalError*alphaSignal*alphaSignal) +
-                      (integratedSignal*integratedSignal*integratedBackgroundError*integratedBackgroundError*
-                       alphaBackground*alphaBackground) );
+    const double result = TMath::Sqrt( (TMath::Power(alphaBackground*integratedSignal*integratedBackgroundError,2)) +
+                                       (TMath::Power(alphaSignal*integratedBackground*integratedSignalError,2)) ) /
+                                       (integratedBackground + integratedSignal);
+    
+    std::cout << "\nresult: " << result;
     
     return result;
 }
@@ -76,6 +76,32 @@ const double PurityPlot::GetIntegratedBackground(const int bin)
     for(int b=bin;b<_nBins;b++)
         result += _backgroundHist.GetBinContent(b);
     
+    return result;
+}
+
+const double PurityPlot::GetIntegratedSignalError(const int bin)
+{
+    double errorSquared = 0;
+    
+    const double alpha = 1.0/static_cast<double>(_nSignalEntries);
+    
+    for(int b=bin;b<_nBins;b++)
+        errorSquared += _signalHist.GetBinContent(b);
+    
+    const double result = alpha*TMath::Sqrt(errorSquared);
+    return result;
+}
+
+const double PurityPlot::GetIntegratedBackgroundError(const int bin)
+{
+    double errorSquared = 0;
+    
+    const double alpha = 1.0/static_cast<double>(_nBackgroundEntries);
+    
+    for(int b=bin;b<_nBins;b++)
+        errorSquared += _backgroundHist.GetBinContent(b);
+    
+    const double result = alpha*TMath::Sqrt(errorSquared);
     return result;
 }
 

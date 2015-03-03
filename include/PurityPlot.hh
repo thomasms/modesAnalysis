@@ -27,6 +27,9 @@ private:
     const double GetIntegratedSignal(const int bin);
     const double GetIntegratedBackground(const int bin);
     
+    const double GetIntegratedSignalError(const int bin);
+    const double GetIntegratedBackgroundError(const int bin);
+    
     TH1F _signalHist;
     TH1F _backgroundHist;
     
