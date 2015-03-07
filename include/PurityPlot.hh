@@ -33,8 +33,8 @@ private:
     TH1F _signalHist;
     TH1F _backgroundHist;
     
-    int _nSignalEntries;
-    int _nBackgroundEntries;
+    double _alphaSignal;
+    double _alphaBackground;
 
 };
 
