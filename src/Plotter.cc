@@ -298,7 +298,7 @@ void Plotter::DrawFOM(const std::shared_ptr<Source> sourcePtr)
     cvs_channel_eff->SetTicky();
     g1_eff_s_b->Draw("AP");
     g1_pur_s_b->Draw("P");
-    g1_effXpur_s_b->Draw("P");
+    //g1_effXpur_s_b->Draw("P");
     legend_->Draw();
     
     if(_savePlots)
@@ -359,8 +359,9 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     const int entriesSignal      = hist_signal.GetEntries();
     const int entriesBackground  = hist_background.GetEntries();
     
-    NormaliseHistogram(hist_signal);
-    NormaliseHistogram(hist_background);
+    // Don't normalise
+//    NormaliseHistogram(hist_signal);
+//    NormaliseHistogram(hist_background);
     
     double highestFOM = 0.0;
     double bestCut = 0.0;
@@ -382,8 +383,8 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     //loop over histogram bins to get bin values
     for(int bin=0;bin<numberOfBins;bin++)
     {
-        std::cout << "\nSignal entries in bin     " << bin << " : \t\t" << hist_signal.GetBinContent(bin+1)*entriesSignal;
-        std::cout << "\nBackground entries in bin " << bin << " : \t\t" << hist_background.GetBinContent(bin+1)*entriesBackground;
+        std::cout << "\nSignal entries in bin     " << bin << " : \t\t" << hist_signal.GetBinContent(bin+1);
+        std::cout << "\nBackground entries in bin " << bin << " : \t\t" << hist_background.GetBinContent(bin+1);
         double binWidth = hist_signal.GetBinWidth(0);
         
         xValue[bin]     = minXBin + (bin+0.5)*binWidth;
@@ -430,7 +431,7 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     g1_fom_s_b->SetTitle("FOM");
     
     //Efficiency
-    EfficiencyPlot eff(hist_signal,entriesSignal);
+    EfficiencyPlot eff(hist_signal);
     eff.Init();
     //eff.CalculateUsingBinomial();
     eff.CalculateUsingRoot();
@@ -439,7 +440,7 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     g1_eff_s_b->SetTitle("EFF");
     
     // Purity
-    PurityPlot pur(hist_signal,hist_background,entriesSignal,entriesBackground);
+    PurityPlot pur(hist_signal,hist_background);
     pur.Init();
     pur.Calculate();
     if(!g1_pur_s_b)delete g1_pur_s_b;
@@ -463,6 +464,7 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     g1_fom_s_b->GetYaxis()->SetTitle("s / #sqrt{s+b}");
     g1_fom_s_b->GetYaxis()->SetTitleOffset(1.4);
     g1_fom_s_b->GetXaxis()->SetRangeUser(minXBin,maxXBin);
+    g1_fom_s_b->GetXaxis()->SetRangeUser(0,1);
     g1_fom_s_b->GetYaxis()->SetRangeUser(0,1);
     g1_fom_s_b->SetMarkerStyle(24);
     g1_fom_s_b->SetMarkerSize(0.5);
@@ -471,6 +473,7 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     g1_eff_s_b->SetTitle(Form("Efficiency and Purity for channel %i",channel));
     g1_eff_s_b->GetXaxis()->SetTitle("(QLong - QShort)/QLong");
     g1_eff_s_b->GetXaxis()->SetRangeUser(minXBin,maxXBin);
+    g1_eff_s_b->GetXaxis()->SetRangeUser(0,1);
     g1_eff_s_b->GetYaxis()->SetRangeUser(0,1);
     g1_eff_s_b->SetMarkerStyle(24);
     g1_eff_s_b->SetMarkerSize(0.5);

@@ -1,11 +1,9 @@
 #include "PurityPlot.hh"
 
-PurityPlot::PurityPlot(const TH1F& signalHist, const TH1F& backgroundHist, const int signalHistEntries, const int backgroundHistEntries) : BasePlot()
+PurityPlot::PurityPlot(const TH1F& signalHist, const TH1F& backgroundHist) : BasePlot()
 {
     _signalHist             = signalHist;
     _backgroundHist         = backgroundHist;
-    _nSignalEntries         = signalHistEntries;
-    _nBackgroundEntries     = backgroundHistEntries;
 }
 
 PurityPlot::~PurityPlot()
@@ -15,11 +13,17 @@ PurityPlot::~PurityPlot()
 
 void PurityPlot::Init()
 {
-    _nBins = _signalHist.GetNbinsX();
+    _nBins                  = _signalHist.GetNbinsX();
+    _nSignalEntries         = _signalHist.GetEntries();
+    _nBackgroundEntries     = _backgroundHist.GetEntries();
     
     //check they have the same binning
     if(_nBins != _backgroundHist.GetNbinsX())
         return;
+ 
+    // Normalise histograms
+    _signalHist.Scale(1/static_cast<double>(_nSignalEntries));
+    _backgroundHist.Scale(1/static_cast<double>(_nBackgroundEntries));
     
     //Initialise arrays
     _xValues            = new double[_nBins];

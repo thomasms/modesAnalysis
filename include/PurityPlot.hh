@@ -14,7 +14,7 @@
 class PurityPlot : public BasePlot
 {
 public:
-    PurityPlot(const TH1F& signalhist, const TH1F& backgroundHist, const int signalHistEntries, const int backgroundHistEntries);
+    PurityPlot(const TH1F& signalhist, const TH1F& backgroundHist);
     ~PurityPlot();
     
     void Init();

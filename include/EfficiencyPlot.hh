@@ -20,7 +20,7 @@
 class EfficiencyPlot : public BasePlot
 {
 public:
-    EfficiencyPlot(const TH1F& hist1, const int nEntries);
+    EfficiencyPlot(const TH1F& hist1);
     virtual ~EfficiencyPlot();
     
     void Init();

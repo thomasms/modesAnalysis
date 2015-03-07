@@ -1,7 +1,7 @@
 #include "EfficiencyPlot.hh"
 
-EfficiencyPlot::EfficiencyPlot(const TH1F& hist, const int nEntries) : BasePlot(),
-                                _hist(hist), _nEntries(nEntries)
+EfficiencyPlot::EfficiencyPlot(const TH1F& hist) : BasePlot(),
+                                _hist(hist)
 {
 }
 
@@ -11,7 +11,8 @@ EfficiencyPlot::~EfficiencyPlot()
 
 void EfficiencyPlot::Init()
 {
-    _nBins =_hist.GetNbinsX();
+    _nBins       = _hist.GetNbinsX();
+    _nEntries    = _hist.GetEntries();
     _totalSignal = _hist.Integral(0,_nBins);
     
     //Initialise arrays
@@ -35,7 +36,7 @@ const double EfficiencyPlot::GetEfficiency(const int bin)
 
 const double EfficiencyPlot::GetEfficiencyError(const int bin)
 {
-    int nEntriesInBin = _hist.GetBinContent(bin)*_nEntries;
+    int nEntriesInBin = _hist.GetBinContent(bin);//*_nEntries;  // unnormalised histogram
     
     //use binomial errors
     const double eff = GetEfficiency(bin);
@@ -73,7 +74,7 @@ void EfficiencyPlot::CalculateUsingRoot()
     //loop over histogram bins to set bin values
     for(int bin=0;bin<_nBins;bin++)
     {
-        int nEntriesInBin   = _hist.GetBinContent(bin)*_nEntries;
+        int nEntriesInBin   = _hist.GetBinContent(bin);//*_nEntries;  // unnormalised histogram
         
         passHist.SetBinContent(bin,static_cast<int>(GetEfficiency(bin)*nEntriesInBin));
         totalHist.SetBinContent(bin,nEntriesInBin);
