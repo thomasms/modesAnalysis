@@ -19,10 +19,6 @@ void PurityPlot::Init()
     //check they have the same binning
     if(_nBins != _backgroundHist.GetNbinsX())
         return;
- 
-    // Normalise histograms
-    _signalHist.Scale(_alphaSignal);
-    _backgroundHist.Scale(_alphaBackground);
     
     //Initialise arrays
     _xValues            = new double[_nBins];
@@ -37,27 +33,31 @@ const double PurityPlot::GetPurity(const int bin)
     const double integratedSignal     = GetIntegratedSignal(bin);
     const double integratedBackground = GetIntegratedBackground(bin);
     
-    const double result = integratedSignal/(integratedSignal + integratedBackground);
+    const double result = _alphaSignal*integratedSignal/(_alphaSignal*integratedSignal + _alphaBackground*integratedBackground);
     
     return result;
 }
 
 const double PurityPlot::GetPurityError(const int bin)
 {    
-    const double alphaSignalError     = 0.0;
-    const double alphaBackgroundError = 0.0;
+    const double alphaSignalError     = TMath::Power(_signalHist.GetEntries(),-3.0/2.0);
+    const double alphaBackgroundError = TMath::Power(_backgroundHist.GetEntries(),-3.0/2.0);
     
     const double integratedSignal     = GetIntegratedSignal(bin);
     const double integratedBackground = GetIntegratedBackground(bin);
     
-    const double integratedSignalError     = GetIntegratedSignalError(bin);
-    const double integratedBackgroundError = GetIntegratedBackgroundError(bin);
+    const double integratedSignalError     = _alphaSignal*GetIntegratedSignalError(bin);
+    const double integratedBackgroundError = _alphaBackground*GetIntegratedBackgroundError(bin);
     
-    const double result = TMath::Sqrt( (TMath::Power(_alphaBackground*integratedSignal*integratedBackgroundError,2)) +
-                                       (TMath::Power(_alphaSignal*integratedBackground*integratedSignalError,2)) ) /
-                                       (integratedBackground + integratedSignal);
+    const double purity = GetPurity(bin);
     
-    std::cout << "\nresult: " << result;
+    const double result = (purity*purity / (_alphaSignal*integratedSignal))*
+                            TMath::Sqrt( (TMath::Power(_alphaBackground*integratedBackgroundError,2)) +
+                                        (TMath::Power(_alphaBackground*integratedBackground*integratedSignalError/integratedSignal,2))  +
+                                        (TMath::Power(integratedBackground*alphaBackgroundError,2))  +
+                                        (TMath::Power(_alphaBackground*integratedBackground*alphaSignalError/_alphaSignal,2))  );
+    
+    //std::cout << "\nError for the " << bin << " th bin: " << result;
     
     return result;
 }
@@ -89,7 +89,7 @@ const double PurityPlot::GetIntegratedSignalError(const int bin)
     for(int b=bin;b<_nBins;b++)
         errorSquared += _signalHist.GetBinContent(b);
     
-    const double result = _alphaSignal*TMath::Sqrt(errorSquared);
+    const double result = TMath::Sqrt(errorSquared);
     return result;
 }
 
@@ -100,7 +100,7 @@ const double PurityPlot::GetIntegratedBackgroundError(const int bin)
     for(int b=bin;b<_nBins;b++)
         errorSquared += _backgroundHist.GetBinContent(b);
     
-    const double result = _alphaBackground*TMath::Sqrt(errorSquared);
+    const double result = TMath::Sqrt(errorSquared);
     return result;
 }
 
