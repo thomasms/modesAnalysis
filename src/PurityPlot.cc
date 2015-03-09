@@ -21,11 +21,7 @@ void PurityPlot::Init()
         return;
     
     //Initialise arrays
-    _xValues            = new double[_nBins];
-    _xValueErrors       = new double[_nBins];
-    _yValues            = new double[_nBins];
-    _yValueErrorsLow    = new double[_nBins];
-    _yValueErrorsHigh   = new double[_nBins];
+    InitVectors();
 }
 
 const double PurityPlot::GetPurity(const int bin)

@@ -37,8 +37,9 @@ SOURCE6 = Handler
 SOURCE7 = EfficiencyPlot
 SOURCE8 = PurityPlot
 SOURCE9 = BasePlot
+SOURCE10 = FOMPlot
 
-OBJ = $(SOURCE1).o $(SOURCE2).o $(SOURCE3).o $(SOURCE4).o $(SOURCE5).o $(SOURCE6).o $(SOURCE7).o $(SOURCE8).o $(SOURCE9).o
+OBJ = $(SOURCE1).o $(SOURCE2).o $(SOURCE3).o $(SOURCE4).o $(SOURCE5).o $(SOURCE6).o $(SOURCE7).o $(SOURCE8).o $(SOURCE9).o $(SOURCE10).o
 OBJS = $(addprefix $(ODIR)/,$(OBJ))
 
 #define root system location

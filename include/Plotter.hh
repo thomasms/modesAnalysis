@@ -29,6 +29,7 @@
 #include "dataLib.hh"
 #include "EfficiencyPlot.hh"
 #include "PurityPlot.hh"
+#include "FOMPlot.hh"
 
 class Plotter
 {
@@ -47,17 +48,6 @@ public:
     
 private:
     
-    const BinaryResult     GetFOM(const TH1F& hist_signal,
-                                  const TH1F& hist_background,
-                                  const double signalEntries,
-                                  const double backgroundEntries,
-                                  int binMin);
-    const BinaryResult     GetEffXPur(const TH1F& hist_signal,
-                                      const TH1F& hist_background,
-                                      const double signalEntries,
-                                      const double backgroundEntries,
-                                      int binMin);
-    
     const int FindCanvas(const TString& name);
     void SetupHistogram(TH1F& hist,int option);
     void SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel);
@@ -69,10 +59,6 @@ private:
     void PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int channel);
     void PrintPSDDetails(const std::shared_ptr<Source> sourcePtr, int channel);
     
-    const BinaryResult GetBinaryResult(const double numerator,
-                                       const double denominator,
-                                       const double numeratorError,
-                                       const double denominatorError);
     template<class T>
     void WriteToFile(const T& hist,const TString histname,const TString filename)
     {

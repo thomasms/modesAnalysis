@@ -22,8 +22,17 @@ public:
     BasePlot();
     virtual ~BasePlot();
     
-    void Init();
-    void SetNumberOfBins(int nBins) {_nBins = nBins;};
+    virtual void Init();
+    virtual void InitVectors();
+    virtual const double GetBestValue();
+    virtual const double GetBestCut();
+    
+    void      SetNumberOfBins(int nBins) {_nBins = nBins;};
+    const int GetNumberOfBins() { return _nBins;};
+    
+    const double GetXmin();
+    const double GetXmax();
+    const double GetXwidth();
     
     TGraphAsymmErrors* GetGraphCopy();
     
@@ -31,11 +40,11 @@ protected:
     
     int _nBins;
         
-    double* _xValues;
-    double* _xValueErrors;
-    double* _yValues;
-    double* _yValueErrorsLow;
-    double* _yValueErrorsHigh;
+    std::vector<double> _xValues;
+    std::vector<double> _xValueErrors;
+    std::vector<double> _yValues;
+    std::vector<double> _yValueErrorsLow;
+    std::vector<double> _yValueErrorsHigh;
     
 };
 

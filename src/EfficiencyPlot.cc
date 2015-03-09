@@ -15,11 +15,7 @@ void EfficiencyPlot::Init()
     _totalSignal = _hist.Integral(0, _nBins);
     
     //Initialise arrays
-    _xValues            = new double[_nBins];
-    _xValueErrors       = new double[_nBins];
-    _yValues            = new double[_nBins];
-    _yValueErrorsLow    = new double[_nBins];
-    _yValueErrorsHigh   = new double[_nBins];
+    InitVectors();
 }
 
 const double EfficiencyPlot::GetEfficiency(const int bin)
