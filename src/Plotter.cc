@@ -361,8 +361,8 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     //Efficiency
     EfficiencyPlot eff(hist_signal);
     eff.Init();
-    //eff.CalculateUsingBinomial();
-    eff.CalculateUsingRoot();
+    eff.CalculateUsingBinomial();
+    //eff.CalculateUsingRoot();
     if(!g1_eff_s_b)delete g1_eff_s_b;
     g1_eff_s_b      = eff.GetGraphCopy();
     g1_eff_s_b->SetTitle("EFF");
@@ -370,7 +370,8 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     // Purity
     PurityPlot pur(hist_signal,hist_background);
     pur.Init();
-    pur.Calculate();
+    pur.CalculateUsingBinomial();
+    //eff.CalculateUsingRoot();
     if(!g1_pur_s_b)delete g1_pur_s_b;
     g1_pur_s_b      = pur.GetGraphCopy();
     g1_pur_s_b->SetTitle("PUR");

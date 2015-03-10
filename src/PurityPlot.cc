@@ -30,12 +30,7 @@ void PurityPlot::Init()
     
     //Initialise efficiencies
     _signalEff->Init();
-    _signalEff->CalculateUsingRoot();
-    //_signalEff->CalculateUsingBinomial();
-    
     _backgroundEff->Init();
-    _backgroundEff->CalculateUsingRoot();
-    //_backgroundEff->CalculateUsingBinomial();
 }
 
 const double PurityPlot::CalculatePurity(const int bin)
@@ -162,10 +157,34 @@ const double PurityPlot::GetIntegratedBackgroundError(const int bin)
     return result;
 }
 
-void PurityPlot::Calculate()
+void PurityPlot::CalculateUsingBinomial()
 {
     double minXBin      = _signalHist.GetXaxis()->GetXmin();
     double maxXBin      = _signalHist.GetXaxis()->GetXmax();
+    
+    _signalEff->CalculateUsingBinomial();
+    _backgroundEff->CalculateUsingBinomial();
+    
+    //loop over histogram bins to get bin values
+    for(int bin=0;bin<_nBins;bin++)
+    {
+        double binWidth = _signalHist.GetBinWidth(0);
+        
+        _xValues[bin]               = minXBin + (bin+0.5)*binWidth;
+        _xValueErrors[bin]          = binWidth*0.5;
+        _yValues[bin]               = CalculatePurity(bin);
+        _yValueErrorsLow[bin]       = CalculatePurityErrorLow(bin);
+        _yValueErrorsHigh[bin]      = CalculatePurityErrorHigh(bin);
+    }
+}
+
+void PurityPlot::CalculateUsingRoot()
+{
+    double minXBin      = _signalHist.GetXaxis()->GetXmin();
+    double maxXBin      = _signalHist.GetXaxis()->GetXmax();
+    
+    _signalEff->CalculateUsingRoot();
+    _backgroundEff->CalculateUsingRoot();
     
     //loop over histogram bins to get bin values
     for(int bin=0;bin<_nBins;bin++)

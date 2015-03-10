@@ -24,7 +24,8 @@ public:
     ~PurityPlot();
     
     void Init();
-    void Calculate();
+    void CalculateUsingRoot();
+    void CalculateUsingBinomial();
         
     const double GetPurity(const int bin);
     const double GetPurityErrorLow(const int bin);
