@@ -73,7 +73,7 @@ const double BasePlot::GetXmin()
     
     //sort vector
     std::sort(_xValues.begin(), _xValues.end());
-    result = _xValues[0];
+    result = _xValues[0] - _xValueErrors[0];
     
     return result;
 }
@@ -86,7 +86,7 @@ const double BasePlot::GetXmax()
     
     //sort vector
     std::sort(_xValues.begin(), _xValues.end());
-    result = _xValues[_xValues.size() - 1];
+    result = _xValues[_xValues.size() - 1] + _xValueErrors[_xValues.size() - 1];
     
     return result;
 }

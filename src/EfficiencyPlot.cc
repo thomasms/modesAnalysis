@@ -12,13 +12,13 @@ void EfficiencyPlot::Init()
 {
     _nBins       = _hist.GetNbinsX();
     _nEntries    = _hist.GetEntries();
-    _totalSignal = _hist.Integral(0, _nBins);
+    _totalSignal = _hist.Integral(0, _nBins); // they are the same
     
     //Initialise arrays
     InitVectors();
 }
 
-const double EfficiencyPlot::GetEfficiency(const int bin)
+const double EfficiencyPlot::CalculateEfficiency(const int bin)
 {
     double integratedSignal = 0;
     
@@ -29,15 +29,20 @@ const double EfficiencyPlot::GetEfficiency(const int bin)
     return result;
 }
 
-const double EfficiencyPlot::GetEfficiencyError(const int bin)
+const double EfficiencyPlot::CalculateEfficiencyErrorLow(const int bin)
 {
     int nEntriesInBin = _hist.GetBinContent(bin);
     
     //use binomial errors
     const double eff = GetEfficiency(bin);
     const double result = TMath::Sqrt((eff*(1-eff))/static_cast<double>(nEntriesInBin));
-        
+    
     return result;
+}
+
+const double EfficiencyPlot::CalculateEfficiencyErrorHigh(const int bin)
+{
+    return CalculateEfficiencyErrorLow(bin);
 }
 
 void EfficiencyPlot::CalculateUsingBinomial()
@@ -52,9 +57,9 @@ void EfficiencyPlot::CalculateUsingBinomial()
         
         _xValues[bin]               = minXBin + (bin+0.5)*binWidth;
         _xValueErrors[bin]          = binWidth*0.5;
-        _yValues[bin]               = GetEfficiency(bin);
-        _yValueErrorsLow[bin]       = GetEfficiencyError(bin);
-        _yValueErrorsHigh[bin]      = GetEfficiencyError(bin);
+        _yValues[bin]               = CalculateEfficiency(bin);
+        _yValueErrorsLow[bin]       = CalculateEfficiencyErrorLow(bin);
+        _yValueErrorsHigh[bin]      = CalculateEfficiencyErrorHigh(bin);
     }
 }
 
@@ -69,10 +74,11 @@ void EfficiencyPlot::CalculateUsingRoot()
     //loop over histogram bins to set bin values
     for(int bin=0;bin<_nBins;bin++)
     {
-        int nEntriesInBin   = _hist.GetBinContent(bin);
+        int nPass   = _hist.Integral(bin,_nBins);
         
-        passHist.SetBinContent(bin,static_cast<int>(GetEfficiency(bin)*nEntriesInBin));
-        totalHist.SetBinContent(bin,nEntriesInBin);
+        passHist.SetBinContent(bin, nPass);
+        totalHist.SetBinContent(bin,_nEntries);
+        
     }
     
     TGraphAsymmErrors* graph = new TGraphAsymmErrors(&passHist,&totalHist);
@@ -86,3 +92,42 @@ void EfficiencyPlot::CalculateUsingRoot()
     delete graph;
 }
 
+const double EfficiencyPlot::GetEfficiency(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValues.size() > bin)
+        result = _yValues[bin];
+    
+    return result;
+}
+
+const double EfficiencyPlot::GetEfficiencyErrorAverage(const int bin)
+{
+    double result = 0.0;
+    
+    if((_yValueErrorsLow.size() > bin) && (_yValueErrorsHigh.size() > bin))
+        result = (GetEfficiencyErrorLow(bin) + GetEfficiencyErrorHigh(bin))/2.0;
+    
+    return result;
+}
+
+const double EfficiencyPlot::GetEfficiencyErrorLow(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValueErrorsLow.size() > bin)
+        result = _yValueErrorsLow[bin];
+    
+    return result;
+}
+
+const double EfficiencyPlot::GetEfficiencyErrorHigh(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValueErrorsHigh.size() > bin)
+        result = _yValueErrorsHigh[bin];
+    
+    return result;
+}

@@ -1,9 +1,14 @@
 #include "PurityPlot.hh"
 
+const double smallLimit = 0.0;//1.0e-4;
+
 PurityPlot::PurityPlot(const TH1F& signalHist, const TH1F& backgroundHist) : BasePlot()
 {
     _signalHist             = signalHist;
     _backgroundHist         = backgroundHist;
+    
+    _signalEff     = std::make_shared<EfficiencyPlot>(_signalHist);
+    _backgroundEff = std::make_shared<EfficiencyPlot>(_backgroundHist);
 }
 
 PurityPlot::~PurityPlot()
@@ -22,20 +27,77 @@ void PurityPlot::Init()
     
     //Initialise arrays
     InitVectors();
+    
+    //Initialise efficiencies
+    _signalEff->Init();
+    _signalEff->CalculateUsingRoot();
+    //_signalEff->CalculateUsingBinomial();
+    
+    _backgroundEff->Init();
+    _backgroundEff->CalculateUsingRoot();
+    //_backgroundEff->CalculateUsingBinomial();
 }
 
-const double PurityPlot::GetPurity(const int bin)
+const double PurityPlot::CalculatePurity(const int bin)
 {
-    const double integratedSignal     = GetIntegratedSignal(bin);
-    const double integratedBackground = GetIntegratedBackground(bin);
+//    const double integratedSignal     = GetIntegratedSignal(bin);
+//    const double integratedBackground = GetIntegratedBackground(bin);
+//    
+//    const double result = _alphaSignal*integratedSignal/(_alphaSignal*integratedSignal + _alphaBackground*integratedBackground);
     
-    const double result = _alphaSignal*integratedSignal/(_alphaSignal*integratedSignal + _alphaBackground*integratedBackground);
+    const double signalEff     = _signalEff->GetEfficiency(bin);
+    const double backgroundEff = _backgroundEff->GetEfficiency(bin);
+    
+    if(signalEff <= smallLimit) return 0.0;
+    
+    const double result = 1.0/(1.0 + (backgroundEff/signalEff));
     
     return result;
 }
 
-const double PurityPlot::GetPurityError(const int bin)
-{    
+const double PurityPlot::CalculatePurityErrorLow(const int bin)
+{
+    const double signalEff     = _signalEff->GetEfficiency(bin);
+    const double backgroundEff = _backgroundEff->GetEfficiency(bin);
+    
+    if(signalEff <= smallLimit) return 0.0;
+    
+    const double signalError     = _signalEff->GetEfficiencyErrorLow(bin);
+    const double backgroundError = _backgroundEff->GetEfficiencyErrorLow(bin);
+    
+    const double purity = CalculatePurity(bin);
+    
+    const double signalErrorCoeff     = backgroundEff*TMath::Power(purity/signalEff,2.0);
+    const double backgroundErrorCoeff = TMath::Power(purity,2.0)/signalEff;
+    
+    const double result = TMath::Sqrt( (TMath::Power(signalErrorCoeff*signalError,2.0)) + (TMath::Power(backgroundErrorCoeff*backgroundError,2.0)) );
+    
+    return result;
+}
+
+const double PurityPlot::CalculatePurityErrorHigh(const int bin)
+{
+    const double signalEff     = _signalEff->GetEfficiency(bin);
+    const double backgroundEff = _backgroundEff->GetEfficiency(bin);
+    
+    if(signalEff <= smallLimit) return 0.0;
+    
+    const double signalError     = _signalEff->GetEfficiencyErrorHigh(bin);
+    const double backgroundError = _backgroundEff->GetEfficiencyErrorHigh(bin);
+    
+    const double purity = CalculatePurity(bin);
+    
+    const double signalErrorCoeff     = backgroundEff*TMath::Power(purity/signalEff,2.0);
+    const double backgroundErrorCoeff = TMath::Power(purity,2.0)/signalEff;
+    
+    const double result = TMath::Sqrt( (TMath::Power(signalErrorCoeff*signalError,2.0)) + (TMath::Power(backgroundErrorCoeff*backgroundError,2.0)) );
+        
+    return result;
+}
+
+// Old way of calculating methods - not currently used
+const double PurityPlot::CalculatePurityErrorOld(const int bin)
+{
     const double alphaSignalError     = TMath::Power(_signalHist.GetEntries(),-3.0/2.0);
     const double alphaBackgroundError = TMath::Power(_backgroundHist.GetEntries(),-3.0/2.0);
     
@@ -45,7 +107,7 @@ const double PurityPlot::GetPurityError(const int bin)
     const double integratedSignalError     = _alphaSignal*GetIntegratedSignalError(bin);
     const double integratedBackgroundError = _alphaBackground*GetIntegratedBackgroundError(bin);
     
-    const double purity = GetPurity(bin);
+    const double purity = CalculatePurity(bin);
     
     const double result = (purity*purity / (_alphaSignal*integratedSignal))*
                             TMath::Sqrt( (TMath::Power(_alphaBackground*integratedBackgroundError,2)) +
@@ -112,8 +174,38 @@ void PurityPlot::Calculate()
         
         _xValues[bin]               = minXBin + (bin+0.5)*binWidth;
         _xValueErrors[bin]          = binWidth*0.5;
-        _yValues[bin]               = GetPurity(bin);
-        _yValueErrorsLow[bin]       = GetPurityError(bin);
-        _yValueErrorsHigh[bin]      = _yValueErrorsLow[bin];
+        _yValues[bin]               = CalculatePurity(bin);
+        _yValueErrorsLow[bin]       = CalculatePurityErrorLow(bin);
+        _yValueErrorsHigh[bin]      = CalculatePurityErrorHigh(bin);
     }
+}
+
+const double PurityPlot::GetPurity(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValues.size() > bin)
+        result = _yValues[bin];
+    
+    return result;
+}
+
+const double PurityPlot::GetPurityErrorLow(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValueErrorsLow.size() > bin)
+        result = _yValueErrorsLow[bin];
+    
+    return result;
+}
+
+const double PurityPlot::GetPurityErrorHigh(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValueErrorsHigh.size() > bin)
+        result = _yValueErrorsHigh[bin];
+    
+    return result;
 }

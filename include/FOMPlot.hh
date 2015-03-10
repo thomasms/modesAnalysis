@@ -21,9 +21,15 @@ public:
     
     void Init();
     void Calculate();
-        
+    
     const double GetFOM(const int bin);
-    const double GetFOMError(const int bin);
+    const double GetFOMErrorLow(const int bin);
+    const double GetFOMErrorHigh(const int bin);
+    
+private:
+    const double CalculateFOM(const int bin);
+    const double CalculateFOMErrorLow(const int bin);
+    const double CalculateFOMErrorHigh(const int bin);
     
 private:
     std::shared_ptr<PurityPlot> _purity;

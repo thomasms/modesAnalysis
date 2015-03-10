@@ -2,6 +2,10 @@
 #define PURITY_PLOT_HH
 
 #include <iostream>
+#include <iomanip>
+#include <memory>
+#include <vector>
+#include <utility>
 
 #include "TH1.h"
 #include "TH2.h"
@@ -9,6 +13,8 @@
 #include "TGraphAsymmErrors.h"
 
 #include "BasePlot.hh"
+#include "PurityPlot.hh"
+#include "EfficiencyPlot.hh"
 #include "dataLib.hh"
 
 class PurityPlot : public BasePlot
@@ -21,9 +27,17 @@ public:
     void Calculate();
         
     const double GetPurity(const int bin);
-    const double GetPurityError(const int bin);
+    const double GetPurityErrorLow(const int bin);
+    const double GetPurityErrorHigh(const int bin);
     
 private:
+    const double CalculatePurity(const int bin);
+    const double CalculatePurityErrorLow(const int bin);
+    const double CalculatePurityErrorHigh(const int bin);
+    
+    //not used
+    const double CalculatePurityErrorOld(const int bin);
+    
     const double GetIntegratedSignal(const int bin);
     const double GetIntegratedBackground(const int bin);
     
@@ -35,6 +49,9 @@ private:
     
     double _alphaSignal;
     double _alphaBackground;
+    
+    std::shared_ptr<EfficiencyPlot> _signalEff;
+    std::shared_ptr<EfficiencyPlot> _backgroundEff;
 
 };
 

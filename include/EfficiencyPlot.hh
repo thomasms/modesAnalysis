@@ -26,16 +26,23 @@ public:
     void Init();
     void CalculateUsingBinomial();
     void CalculateUsingRoot();
-        
+    
     const double GetEfficiency(const int bin);
-    const double GetEfficiencyError(const int bin);
+    const double GetEfficiencyErrorAverage(const int bin);
+    const double GetEfficiencyErrorLow(const int bin);
+    const double GetEfficiencyErrorHigh(const int bin);
+    
+private:
+    const double CalculateEfficiency(const int bin);
+    const double CalculateEfficiencyErrorLow(const int bin);
+    const double CalculateEfficiencyErrorHigh(const int bin);
     
 private:
     TH1F _hist;
     
     int _nEntries;
     double _totalSignal;
-
+    
 };
 
 #endif

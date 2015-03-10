@@ -18,11 +18,10 @@ void FOMPlot::Init()
     
     _nBins = _purity->GetNumberOfBins();
     
-    //Initialise arrays
     InitVectors();
 }
 
-const double FOMPlot::GetFOM(const int bin)
+const double FOMPlot::CalculateFOM(const int bin)
 {
     const double purityValue     = _purity->GetPurity(bin);
     const double efficiencyValue = _efficiency->GetEfficiency(bin);
@@ -32,18 +31,32 @@ const double FOMPlot::GetFOM(const int bin)
     return result;
 }
 
-const double FOMPlot::GetFOMError(const int bin)
+const double FOMPlot::CalculateFOMErrorLow(const int bin)
 {
     const double purityValue     = _purity->GetPurity(bin);
     const double efficiencyValue = _efficiency->GetEfficiency(bin);
     
-    const double purityError     = _purity->GetPurityError(bin);
-    const double efficiencyError = _efficiency->GetEfficiencyError(bin);
+    const double purityError     = _purity->GetPurityErrorLow(bin);
+    const double efficiencyError = _efficiency->GetEfficiencyErrorLow(bin);
     
-    const double result = TMath::Sqrt( (TMath::Power(purityError*purityValue,2)) +
-                                       (TMath::Power(efficiencyError*efficiencyValue,2)) );
+    const double result = TMath::Sqrt( (TMath::Power(purityError*efficiencyValue,2)) +
+                                      (TMath::Power(efficiencyError*purityValue,2)) );
     
     //std::cout << "\nError for the " << bin << " th bin: " << result;
+    
+    return result;
+}
+
+const double FOMPlot::CalculateFOMErrorHigh(const int bin)
+{
+    const double purityValue     = _purity->GetPurity(bin);
+    const double efficiencyValue = _efficiency->GetEfficiency(bin);
+    
+    const double purityError     = _purity->GetPurityErrorHigh(bin);
+    const double efficiencyError = _efficiency->GetEfficiencyErrorHigh(bin);
+    
+    const double result = TMath::Sqrt( (TMath::Power(purityError*efficiencyValue,2)) +
+                                      (TMath::Power(efficiencyError*purityValue,2)) );
     
     return result;
 }
@@ -60,8 +73,38 @@ void FOMPlot::Calculate()
         
         _xValues[bin]               = minXBin + (bin+0.5)*binWidth;
         _xValueErrors[bin]          = binWidth*0.5;
-        _yValues[bin]               = GetFOM(bin);
-        _yValueErrorsLow[bin]       = GetFOMError(bin);
-        _yValueErrorsHigh[bin]      = _yValueErrorsLow[bin];
+        _yValues[bin]               = CalculateFOM(bin);
+        _yValueErrorsLow[bin]       = CalculateFOMErrorLow(bin);
+        _yValueErrorsHigh[bin]      = CalculateFOMErrorHigh(bin);
     }
+}
+
+const double FOMPlot::GetFOM(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValues.size() > bin)
+        result = _yValues[bin];
+    
+    return result;
+}
+
+const double FOMPlot::GetFOMErrorLow(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValueErrorsLow.size() > bin)
+        result = _yValueErrorsLow[bin];
+    
+    return result;
+}
+
+const double FOMPlot::GetFOMErrorHigh(const int bin)
+{
+    double result = 0.0;
+    
+    if(_yValueErrorsHigh.size() > bin)
+        result = _yValueErrorsHigh[bin];
+    
+    return result;
 }
