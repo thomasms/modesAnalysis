@@ -65,7 +65,9 @@ const double PurityPlot::CalculatePurityErrorLow(const int bin)
     const double signalErrorCoeff     = backgroundEff*TMath::Power(purity/signalEff,2.0);
     const double backgroundErrorCoeff = TMath::Power(purity,2.0)/signalEff;
     
-    const double result = TMath::Sqrt( (TMath::Power(signalErrorCoeff*signalError,2.0)) + (TMath::Power(backgroundErrorCoeff*backgroundError,2.0)) );
+    double result = TMath::Sqrt( (TMath::Power(signalErrorCoeff*signalError,2.0)) + (TMath::Power(backgroundErrorCoeff*backgroundError,2.0)) );
+    
+    ValidateLowError(purity, result);
     
     return result;
 }
@@ -85,8 +87,10 @@ const double PurityPlot::CalculatePurityErrorHigh(const int bin)
     const double signalErrorCoeff     = backgroundEff*TMath::Power(purity/signalEff,2.0);
     const double backgroundErrorCoeff = TMath::Power(purity,2.0)/signalEff;
     
-    const double result = TMath::Sqrt( (TMath::Power(signalErrorCoeff*signalError,2.0)) + (TMath::Power(backgroundErrorCoeff*backgroundError,2.0)) );
-        
+    double result = TMath::Sqrt( (TMath::Power(signalErrorCoeff*signalError,2.0)) + (TMath::Power(backgroundErrorCoeff*backgroundError,2.0)) );
+    
+    ValidateHighError(purity, result);
+    
     return result;
 }
 
@@ -197,6 +201,18 @@ void PurityPlot::CalculateUsingRoot()
         _yValueErrorsLow[bin]       = CalculatePurityErrorLow(bin);
         _yValueErrorsHigh[bin]      = CalculatePurityErrorHigh(bin);
     }
+}
+
+void PurityPlot::ValidateLowError(const double value, double& error)
+{
+    if((value - error) < 0)
+        error = value;
+}
+
+void PurityPlot::ValidateHighError(const double value, double& error)
+{
+    if((value + error) > 1)
+        error = 1 - value;
 }
 
 const double PurityPlot::GetPurity(const int bin)

@@ -32,6 +32,9 @@ public:
     const double GetPurityErrorHigh(const int bin);
     
 private:
+    void ValidateLowError(const double value, double& error);
+    void ValidateHighError(const double value, double& error);
+    
     const double CalculatePurity(const int bin);
     const double CalculatePurityErrorLow(const int bin);
     const double CalculatePurityErrorHigh(const int bin);

@@ -35,7 +35,7 @@ const double EfficiencyPlot::CalculateEfficiencyErrorLow(const int bin)
     
     //use binomial errors
     const double eff = GetEfficiency(bin);
-    const double result = TMath::Sqrt((eff*(1-eff))/static_cast<double>(nEntriesInBin));
+    const double result = TMath::Sqrt((eff*(1-eff))/_totalSignal);
     
     return result;
 }

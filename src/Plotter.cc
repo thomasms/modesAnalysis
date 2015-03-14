@@ -396,20 +396,24 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     //Setup graphs
     g1_fom_s_b->SetTitle(Form("FOM for channel %i",channel));
     g1_fom_s_b->GetXaxis()->SetTitle("(QLong - QShort)/QLong");
-    g1_fom_s_b->GetYaxis()->SetTitle("s / #sqrt{s+b}");
+    g1_fom_s_b->GetYaxis()->SetTitle("#epsilon^{s} / (#epsilon^{s} + #epsilon^{b})");
     g1_fom_s_b->GetYaxis()->SetTitleOffset(1.4);
     g1_fom_s_b->GetXaxis()->SetRangeUser(minXBin,maxXBin);
-    g1_fom_s_b->GetXaxis()->SetRangeUser(0,1);
-    g1_fom_s_b->GetYaxis()->SetRangeUser(0,1);
+    g1_fom_s_b->GetXaxis()->SetRangeUser(-0.05,1.05);
+    g1_fom_s_b->GetYaxis()->SetRangeUser(-0.05,1.05);
     g1_fom_s_b->SetMarkerStyle(24);
     g1_fom_s_b->SetMarkerSize(0.5);
     
     //graphs for efficencies and purities
+    std::stringstream ss;
+    ss << eff.GetXwidth();
+    TString yAxisTitle = "#epsilon, #eta, #lambda / " + ss.str();
     g1_eff_s_b->SetTitle(Form("Efficiency and Purity for channel %i",channel));
     g1_eff_s_b->GetXaxis()->SetTitle("(QLong - QShort)/QLong");
+    g1_eff_s_b->GetYaxis()->SetTitle(yAxisTitle);
     g1_eff_s_b->GetXaxis()->SetRangeUser(minXBin,maxXBin);
-    g1_eff_s_b->GetXaxis()->SetRangeUser(0,1);
-    g1_eff_s_b->GetYaxis()->SetRangeUser(0,1);
+    g1_eff_s_b->GetXaxis()->SetRangeUser(-0.05,1.05);
+    g1_eff_s_b->GetYaxis()->SetRangeUser(-0.05,1.05);
     g1_eff_s_b->SetMarkerStyle(24);
     g1_eff_s_b->SetMarkerSize(0.5);
     g1_pur_s_b->SetMarkerStyle(24);
