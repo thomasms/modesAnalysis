@@ -1,17 +1,21 @@
 channel				0
-files				4
+files				1
 
 showBackground			1
 
-signalName			cf252
-backgroundName			cs137
-savePlots			1
+signalName			PuBe
+backgroundName			co60
+savePlots			0
 
-#backgroundFile 		../../data/fastNeutron_tests/137cs-det23_
+signalFile 			../../data/fastNeutron_tests/PuBe-det23_04.root
+backgroundFile			../../data/fastNeutron_tests/60co-det23_07.root
+#backgroundFile  		../../data/fastNeutron_tests/137cs-det23_01.root
+
 #signalFile 			../../data/070214_fastNeutron_tests/det23/top/PuBe-det23_
 #backgroundFile			../../data/070214_fastNeutron_tests/det23/top/PuBe-det23_
-signalFile 			../../data/070214_fastNeutron_tests/det23/top/252cf-det23_
-backgroundFile			../../data/070214_fastNeutron_tests/det23/top/60co-det23_
+#signalFile 			../../data/070214_fastNeutron_tests/det23/top/252cf-det23_
+#backgroundFile			../../data/070214_fastNeutron_tests/det23/top/60co-det23_
+#backgroundFile			../../data/fastNeutron_tests/bckg-det23_01.root
 
 saveDir				/Users/tom/PhysicsWork/PhD/Modes/analysis
 logPlot				0
@@ -26,4 +30,3 @@ psdCut				0.66
 contaminationUpperLevel		10.0
 contaminationLowerLevel		0.3
 binning				4
-

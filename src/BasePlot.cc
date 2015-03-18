@@ -34,6 +34,22 @@ const double BasePlot::GetBestValue()
     return highestValue;
 }
 
+const double BasePlot::GetBestValueError()
+{
+    double highestValue = 0.0;
+    double error = 0.0;
+    
+    for(int i=0;i<_yValues.size();++i)
+    {
+        if(_yValues[i] >=highestValue)
+        {
+            highestValue = _yValues[i];
+            error = (_yValueErrorsLow[i] + _yValueErrorsHigh[i])/2.0;
+        }
+    }
+    return error;
+}
+
 const double BasePlot::GetBestCut()
 {
     double highestValue = 0.0;

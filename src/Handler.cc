@@ -19,6 +19,7 @@ void Handler::InitialiseHistograms(int channel,bool signal)
 {
     //Histograms names
     TString histname_spectra    = Form("h1_channel_spectra_%i",channel);
+    TString histname_qshort     = Form("h1_channel_qshort_%i",channel);
     TString histname_spectra_2D = Form("h2_channel_spectra_%i",channel);
     TString histname_psd        = Form("h1_channel_psd_%i",channel);
 
@@ -28,6 +29,7 @@ void Handler::InitialiseHistograms(int channel,bool signal)
             return;
 
         histname_spectra    += "_sig";
+        histname_qshort     += "_sig";
         histname_spectra_2D += "_sig";
         histname_psd        += "_sig";
     }
@@ -35,8 +37,9 @@ void Handler::InitialiseHistograms(int channel,bool signal)
     {
         if(_h1Vtr_channelsSpectraBkg.size() != channel )
             return;
-
+        
         histname_spectra    += "_bkg";
+        histname_qshort     += "_bkg";
         histname_spectra_2D += "_null";
         histname_psd        += "_bkg";
     }
@@ -44,6 +47,12 @@ void Handler::InitialiseHistograms(int channel,bool signal)
     //Create histograms
     _h1_channelSpectra  = new TH1F(histname_spectra,
                                    histname_spectra,
+                                   1024/_binningFactor,
+                                   0,
+                                   32768/4);
+    
+    _h1_channelQShort   = new TH1F(histname_qshort,
+                                   histname_qshort,
                                    1024/_binningFactor,
                                    0,
                                    32768/4);
@@ -68,12 +77,14 @@ void Handler::InitialiseHistograms(int channel,bool signal)
     if(signal)
     {
         _h1Vtr_channelsSpectraSig.push_back(_h1_channelSpectra);
+        _h1Vtr_channelsQShortSig.push_back(_h1_channelQShort);
         _h2Vtr_channelsSpectraSig.push_back(_h2_channelSpectra);
         _h1Vtr_channelsPsdSig.push_back(_h1_channelPsd);
     }
     else
     {
         _h1Vtr_channelsSpectraBkg.push_back(_h1_channelSpectra);
+        _h1Vtr_channelsQShortBkg.push_back(_h1_channelQShort);
         _h1Vtr_channelsPsdBkg.push_back(_h1_channelPsd);
     }
 }
@@ -89,56 +100,16 @@ void Handler::FillHistograms(int channel,bool signal,float Qlong,float Qshort)
     if(signal)
     {
         _h1Vtr_channelsSpectraSig.at(channel)->Fill(Qlong);
+        _h1Vtr_channelsQShortSig.at(channel)->Fill(Qshort);
         _h2Vtr_channelsSpectraSig.at(channel)->Fill(Qlong,diff);
         _h1Vtr_channelsPsdSig.at(channel)->Fill(diff);
     }
     else
     {
         _h1Vtr_channelsSpectraBkg.at(channel)->Fill(Qlong);
+        _h1Vtr_channelsQShortBkg.at(channel)->Fill(Qshort);
         _h1Vtr_channelsPsdBkg.at(channel)->Fill(diff);
     }
-}
-
-TH1F* Handler::GetSignalSpectraHistPtr(int channel)
-{
-  TH1F* h1_spec = nullptr;
-
-  if( (_h1Vtr_channelsSpectraSig.size() < channel) || (channel <0) )return nullptr;
-
-  if( _h1Vtr_channelsSpectraSig.at(channel) )
-    {  
-      h1_spec = _h1Vtr_channelsSpectraSig.at(channel);
-    }
-  
-  return h1_spec;
-}
-
-TH2F* Handler::GetSignalSpectra2DHistPtr(int channel)
-{
-  TH2F* h2_spec = nullptr;
-
-  if( (_h2Vtr_channelsSpectraSig.size() < channel) || (channel <0) )return nullptr;
-
-  if( _h2Vtr_channelsSpectraSig.at(channel) )
-    {  
-      h2_spec = _h2Vtr_channelsSpectraSig.at(channel);
-    }
-  
-  return h2_spec;
-}
-
-TH1F* Handler::GetSignalPsdHistPtr(int channel)
-{
-  TH1F* h1_psd = nullptr;
-
-  if( (_h1Vtr_channelsPsdSig.size() < channel) || (channel <0) )return nullptr;
-
-  if( _h1Vtr_channelsPsdSig.at(channel) )
-    {  
-      h1_psd = _h1Vtr_channelsPsdSig.at(channel);
-    }
-  
-  return h1_psd;
 }
 
 void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
@@ -237,6 +208,7 @@ void Handler::SetupSource()
     for(int i=0;i<_h1Vtr_channelsSpectraSig.size();i++)
     {
         _source->AddSpectraToSignalHistVtr(*_h1Vtr_channelsSpectraSig.at(i));
+        if(_h1Vtr_channelsQShortSig.at(i))_source->AddQShortToSignalHistVtr(*_h1Vtr_channelsQShortSig.at(i));
         if(_h1Vtr_channelsPsdSig.at(i))_source->AddPsdToSignalHistVtr(*_h1Vtr_channelsPsdSig.at(i));
     }
     for(int i=0;i<_h2Vtr_channelsSpectraSig.size();i++)
@@ -246,6 +218,7 @@ void Handler::SetupSource()
     for(int i=0;i<_h1Vtr_channelsSpectraBkg.size();i++)
     {
         _source->AddSpectraToBackgroundHistVtr(*_h1Vtr_channelsSpectraBkg.at(i));
+        if(_h1Vtr_channelsQShortBkg.at(i))_source->AddQShortToBackgroundHistVtr(*_h1Vtr_channelsQShortBkg.at(i));
         if(_h1Vtr_channelsPsdBkg.at(i))_source->AddPsdToBackgroundHistVtr(*_h1Vtr_channelsPsdBkg.at(i));
     }
     for(int i=0;i<_h1Vtr_channelsSpectraSigMinusBkg.size();i++)

@@ -2,6 +2,7 @@
 
 const static TString PLOTSFILENAME = "./plotsfiletemp.root";
 const static TString SPECTRAEXT = "_ch";
+const static TString QSHORTEXT = "_qshort_ch";
 const static TString PSDEXT = "_psd_ch";
 const static TString FOMEXT = "_fom_ch";
 
@@ -70,6 +71,15 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
     PolishHistogram(hist_signal,"Q_{long}","Normalised count");
     cvs_channel_spectra->cd();
     hist_signal.DrawCopy("HIST");
+    
+    //add fitter - testing only!!!!
+    GaussianFitter fitter(hist_signal);
+    fitter.Fit();
+    TF1* fit = fitter.GetFitFunction();
+    fit->SetLineColor(kRed);
+    fit->SetLineWidth(2);
+    fit->DrawCopy("SAME");
+    fitter.PrintDetails();
     
     TString histname = sourcePtr->GetSignalName() + SPECTRAEXT + std::to_string(_channel);
     if(_savePlots)
@@ -142,6 +152,110 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
         }
         
         PrintSpectraDetails(sourcePtr,ch);
+    }
+}
+
+void Plotter::DrawQShort(const std::shared_ptr<Source> sourcePtr, bool showBackground)
+{
+    int size = sourcePtr->GetSignalQShortHistVtr().size();
+    
+    if(_channel>=size)
+    {
+        std::cout << "\nNo qshort for that channel!, continuing.." <<std::endl;
+        return;
+    }
+    
+    const TString qshortCavasName1D = "cvs_channel_qshort";
+    const int qshortCavasPos = FindCanvas(qshortCavasName1D);
+    if(qshortCavasPos < 0)
+    {
+        cvs_channel_qshort = new TCanvas(qshortCavasName1D,qshortCavasName1D);
+        canvases.push_back(cvs_channel_qshort);
+    }
+    
+    cvs_channel_qshort->cd()->SetTickx();
+    cvs_channel_qshort->cd()->SetTicky();
+    
+    if(_channel<0)
+    {
+        DrawQShortAll(sourcePtr, showBackground);
+        return;
+    }
+    
+    std::cout << "\n====================================================="
+             << "\n=======                QShort              =========="
+                << "\n=====================================================";
+    
+    TH1F hist_signal      = sourcePtr->GetSignalQShortHistVtr().at(_channel);
+    TH1F hist_background  = sourcePtr->GetBackgroundQShortHistVtr().at(_channel);
+    
+    NormaliseHistogram(hist_signal);
+    NormaliseHistogram(hist_background);
+    
+    SetupHistogram(hist_signal,1);
+    PolishHistogram(hist_signal,"Q_{short}","Normalised count");
+    cvs_channel_qshort->cd();
+    hist_signal.DrawCopy("HIST");
+    
+    TString histname = sourcePtr->GetSignalName() + QSHORTEXT + std::to_string(_channel);
+    if(_savePlots)
+        WriteToFile<TH1F>(hist_signal,histname,PLOTSFILENAME);
+    
+    if(showBackground)
+    {
+        SetupHistogram(hist_background,2);
+        hist_background.DrawCopy("SAME");
+        
+        histname = sourcePtr->GetBackgroundName() + QSHORTEXT + std::to_string(_channel);
+        if(_savePlots)
+            WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
+    }
+    
+    PrintQShortDetails(sourcePtr,_channel);
+}
+
+void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBackground)
+{
+    int size = sourcePtr->GetSignalQShortHistVtr().size();
+    
+    cvs_channel_qshort->SetWindowSize(1600,800);
+    cvs_channel_qshort->Divide(4,2);
+    
+    std::cout << "\n====================================================="
+    << "\n=======                Qshort              =========="
+    << "\n=====================================================";
+    
+    for(int ch=0;ch<size;ch++)
+    {
+        TH1F hist_signal = sourcePtr->GetSignalQShortHistVtr().at(ch);
+        TH1F hist_background = sourcePtr->GetBackgroundQShortHistVtr().at(ch);
+        
+        cvs_channel_qshort->cd(ch+1);
+        
+        NormaliseHistogram(hist_signal);
+        NormaliseHistogram(hist_background);
+        
+        SetupHistogram(hist_signal,1);
+        PolishHistogram(hist_signal,"Q_{long}","Normalised count");
+        cvs_channel_qshort->cd(ch+1);
+        if(hist_signal.GetEntries() >0)hist_signal.DrawCopy("HIST");
+        
+        TString histname = sourcePtr->GetSignalName() + QSHORTEXT + std::to_string(ch);
+        if(_savePlots)
+            WriteToFile<TH1F>(hist_signal,histname,PLOTSFILENAME);
+        
+        if(showBackground)
+        {
+            SetupHistogram(hist_background,2);
+            cvs_channel_qshort->cd(ch+1)->SetTickx();
+            cvs_channel_qshort->cd(ch+1)->SetTicky();
+            if(hist_background.GetEntries() >0)hist_background.DrawCopy("SAME");
+            
+            histname = sourcePtr->GetBackgroundName() + QSHORTEXT + std::to_string(ch);
+            if(_savePlots)WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
+        }
+        
+        PrintQShortDetails(sourcePtr,ch);
     }
 }
 
@@ -225,6 +339,7 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
         
         SetupHistogram(hist_signal,1);
         PolishHistogram(hist_signal,"(Q_{long} - Q_{short})/Q_{long}","Normalised count");
+        hist_signal.GetYaxis()->SetTitleOffset(1.4);
         if(hist_signal.GetEntries()>0)hist_signal.DrawCopy("HIST");
       
         TString histname = sourcePtr->GetSignalName() + PSDEXT + std::to_string(ch);
@@ -385,8 +500,8 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     g1_fom_s_b->SetTitle("FOM");
     
     std::cout   << "\n========= Channel " << channel << " ========="
-                << "\nbest f.o.m value: " << fom.GetBestValue()
-                << "\nfor long-short/long = " << fom.GetBestCut()
+                << "\nbest f.o.m value: "     << fom.GetBestValue() << " +- " << fom.GetBestValueError()
+                << "\nfor long-short/long = " << fom.GetBestCut()   << " +- " << fom.GetXwidth() /2.0
                 <<"\n=============================" <<std::endl;
     
     if(!g1_effXpur_s_b)delete g1_effXpur_s_b;
@@ -439,6 +554,14 @@ void Plotter::ResetCanvases()
         delete canvases[i];
     }
     canvases.resize(0);
+}
+
+void Plotter::UpdateCanvases()
+{
+    for(int i=0;i<canvases.size();++i)
+    {
+        canvases[i]->Update();
+    }
 }
 
 const int Plotter::FindCanvas(const TString& name)
@@ -528,6 +651,15 @@ void Plotter::PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int c
     << ", Signal Spectra Mean " << sourcePtr->GetSignalSpectraHistVtr().at(channel).GetMean()
     << ", Background Entries: " << sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetEntries()
     << ", Background Spectra Mean " << sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetMean();
+}
+
+void Plotter::PrintQShortDetails(const std::shared_ptr<Source> sourcePtr, int channel)
+{
+    std::cout   << "\nChannel : " << channel << ", Temp: " << sourcePtr->GetTemperature()
+    << ", Signal Entries: " << sourcePtr->GetSignalQShortHistVtr().at(channel).GetEntries()
+    << ", Signal Qshort Mean " << sourcePtr->GetSignalQShortHistVtr().at(channel).GetMean()
+    << ", Background Entries: " << sourcePtr->GetBackgroundQShortHistVtr().at(channel).GetEntries()
+    << ", Background Qshort Mean " << sourcePtr->GetBackgroundQShortHistVtr().at(channel).GetMean();
 }
 
 void Plotter::PrintPSDDetails(const std::shared_ptr<Source> sourcePtr, int channel)

@@ -25,6 +25,7 @@ public:
     virtual void Init();
     virtual void InitVectors();
     virtual const double GetBestValue();
+    virtual const double GetBestValueError();
     virtual const double GetBestCut();
     
     void      SetNumberOfBins(int nBins) {_nBins = nBins;};

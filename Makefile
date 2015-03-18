@@ -38,8 +38,9 @@ SOURCE7 = EfficiencyPlot
 SOURCE8 = PurityPlot
 SOURCE9 = BasePlot
 SOURCE10 = FOMPlot
+SOURCE11 = GaussianFitter
 
-OBJ = $(SOURCE1).o $(SOURCE2).o $(SOURCE3).o $(SOURCE4).o $(SOURCE5).o $(SOURCE6).o $(SOURCE7).o $(SOURCE8).o $(SOURCE9).o $(SOURCE10).o
+OBJ = $(SOURCE1).o $(SOURCE2).o $(SOURCE3).o $(SOURCE4).o $(SOURCE5).o $(SOURCE6).o $(SOURCE7).o $(SOURCE8).o $(SOURCE9).o $(SOURCE10).o $(SOURCE11).o
 OBJS = $(addprefix $(ODIR)/,$(OBJ))
 
 #define root system location

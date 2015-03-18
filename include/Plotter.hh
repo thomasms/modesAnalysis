@@ -11,6 +11,7 @@
 #include "TTree.h"
 #include "TLine.h"
 #include "TString.h"
+#include "TF1.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TGraph.h"
@@ -30,21 +31,27 @@
 #include "EfficiencyPlot.hh"
 #include "PurityPlot.hh"
 #include "FOMPlot.hh"
+#include "GaussianFitter.hh"
 
 class Plotter
 {
 public:
     Plotter(int channel,bool savePlots);
     ~Plotter();
-  
+    
     void DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBackground=false);
     void DrawSpectraAll(const std::shared_ptr<Source> sourcePtr, bool showBackground=false);
+    
+    void DrawQShort(const std::shared_ptr<Source> sourcePtr, bool showBackground=false);
+    void DrawQShortAll(const std::shared_ptr<Source> sourcePtr, bool showBackground=false);
 
     void DrawPsd(const std::shared_ptr<Source> sourcePtr, bool showBackground=false);
     void DrawPsdAll(const std::shared_ptr<Source> sourcePtr, bool showBackground=false);
     
     void DrawFOM(const std::shared_ptr<Source> sourcePtr);
     void DrawFOMAll(const std::shared_ptr<Source> sourcePtr);
+
+    void UpdateCanvases();
     
 private:
     
@@ -57,6 +64,7 @@ private:
     void SetErrorBars(TH1F& hist, const double scale);
     void PolishHistogram(TH1F& hist,const TString xtitle,const TString ytitle);
     void PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int channel);
+    void PrintQShortDetails(const std::shared_ptr<Source> sourcePtr, int channel);
     void PrintPSDDetails(const std::shared_ptr<Source> sourcePtr, int channel);
     
     template<class T>
@@ -73,7 +81,7 @@ private:
 
     int _channel;
     bool _savePlots;
-
+    
     //Legend
     TLegend* legend_;
     
@@ -85,6 +93,7 @@ private:
     
     //canvases
     TCanvas * cvs_channel_spectra;
+    TCanvas * cvs_channel_qshort;
     TCanvas * cvs_channel_spectra_2D;
     TCanvas * cvs_channel_psd;
     TCanvas * cvs_channel_fom;

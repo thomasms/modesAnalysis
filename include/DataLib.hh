@@ -73,17 +73,21 @@ public:
   
   //get histogram vector - one entry for each channel
   std::vector<TH1F> GetSignalSpectraHistVtr()      { return _h1Vtr_signalChannelSpectra;};
+  std::vector<TH1F> GetSignalQShortHistVtr()       { return _h1Vtr_signalChannelQShort;};
   std::vector<TH2F> GetSignalSpectra2DHistVtr()    { return _h2Vtr_signalChannelSpectra;};
   std::vector<TH1F> GetSMinusBSpectraHistVtr()     { return _h1Vtr_sMinusbChannelSpectra;};
   std::vector<TH1F> GetBackgroundSpectraHistVtr()  { return _h1Vtr_backgroundChannelSpectra;};
+  std::vector<TH1F> GetBackgroundQShortHistVtr()   { return _h1Vtr_backgroundChannelQShort;};
   std::vector<TH1F> GetSignalPsdHistVtr()          { return _h1Vtr_signalChannelPsd;};
   std::vector<TH1F> GetBackgroundPsdHistVtr()      { return _h1Vtr_backgroundChannelPsd;};
 
-  //add histograms to vector - add a channel
+    //add histograms to vector - add a channel
   void AddSpectraToSignalHistVtr(const TH1F& hist)     {_h1Vtr_signalChannelSpectra.push_back(hist);};
+  void AddQShortToSignalHistVtr(const TH1F& hist)      {_h1Vtr_signalChannelQShort.push_back(hist);};
   void AddSpectraToSignal2DHistVtr(const TH2F& hist)   {_h2Vtr_signalChannelSpectra.push_back(hist);};
   void AddSpectraToSMinusBHistVtr(const TH1F& hist)    {_h1Vtr_sMinusbChannelSpectra.push_back(hist);};
   void AddSpectraToBackgroundHistVtr(const TH1F& hist) {_h1Vtr_backgroundChannelSpectra.push_back(hist);};
+  void AddQShortToBackgroundHistVtr(const TH1F& hist)  {_h1Vtr_backgroundChannelQShort.push_back(hist);};
 
   void AddPsdToSignalHistVtr(const TH1F& hist)         {_h1Vtr_signalChannelPsd.push_back(hist);};
   void AddPsdToBackgroundHistVtr(const TH1F& hist)     {_h1Vtr_backgroundChannelPsd.push_back(hist);};
@@ -93,11 +97,13 @@ private:
   double activity,aquistionTimeInMins, temperature, pressure;
   double distance;
   double totalCounts,signalCounts,backgroundCounts;
-  
+    
   std::vector<TH1F> _h1Vtr_signalChannelSpectra;
+  std::vector<TH1F> _h1Vtr_signalChannelQShort;
   std::vector<TH2F> _h2Vtr_signalChannelSpectra;
   std::vector<TH1F> _h1Vtr_sMinusbChannelSpectra;
   std::vector<TH1F> _h1Vtr_backgroundChannelSpectra;
+  std::vector<TH1F> _h1Vtr_backgroundChannelQShort;
   
   std::vector<TH1F> _h1Vtr_signalChannelPsd;
   std::vector<TH1F> _h1Vtr_backgroundChannelPsd;

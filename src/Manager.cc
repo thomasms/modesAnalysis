@@ -115,8 +115,10 @@ void Manager::Plot()
 {
     Plotter plotter(_channel,_savePlots);
     plotter.DrawSpectra(_handler->GetSourcePtr(),_showBackground);
+    plotter.DrawQShort(_handler->GetSourcePtr(),_showBackground);
     plotter.DrawPsd(_handler->GetSourcePtr(),_showBackground);
     plotter.DrawFOM(_handler->GetSourcePtr());
+    plotter.UpdateCanvases();
 }
 
 void Manager::AddFileToSignal(const TString fileToAdd, int index)

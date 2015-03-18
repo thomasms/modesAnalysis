@@ -44,11 +44,7 @@ public:
     void FillHistograms(int channel, bool signal, float Qlong, float Qshort);
     void SubtractBackground();
     void SetupSource();
-    
-    TH1F* GetSignalSpectraHistPtr(int channel);
-    TH2F* GetSignalSpectra2DHistPtr(int channel);
-    TH1F* GetSignalPsdHistPtr(int channel);
-  
+      
     EventParameters GetParameters(int event);
     EventData GetData(int event);
     
@@ -62,13 +58,16 @@ private:
     //histograms
     int _binningFactor;
     TH1F* _h1_channelSpectra;
+    TH1F* _h1_channelQShort;
     TH2F* _h2_channelSpectra;
     TH1F* _h1_channelPsd;
 
     //vectors of histograms for each channel
     std::vector<TH1F*> _h1Vtr_channelsSpectraSig;
+    std::vector<TH1F*> _h1Vtr_channelsQShortSig;
     std::vector<TH2F*> _h2Vtr_channelsSpectraSig;
     std::vector<TH1F*> _h1Vtr_channelsSpectraBkg;
+    std::vector<TH1F*> _h1Vtr_channelsQShortBkg;
     std::vector<TH1F*> _h1Vtr_channelsSpectraSigMinusBkg;
     std::vector<TH1F*> _h1Vtr_channelsPsdSig;
     std::vector<TH1F*> _h1Vtr_channelsPsdBkg;
