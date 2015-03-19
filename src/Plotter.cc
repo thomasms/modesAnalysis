@@ -64,8 +64,8 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
     TH1F hist_background  = sourcePtr->GetBackgroundSpectraHistVtr().at(_channel);
     TH1F hist_sigMinusBkg = sourcePtr->GetSMinusBSpectraHistVtr().at(_channel);
 
-    NormaliseHistogram(hist_signal);
-    NormaliseHistogram(hist_background);
+    //NormaliseHistogram(hist_signal);
+    //NormaliseHistogram(hist_background);
     
     SetupHistogram(hist_signal,1);
     PolishHistogram(hist_signal,"Q_{long}","Normalised count");
@@ -73,7 +73,7 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
     hist_signal.DrawCopy("HIST");
     
     //add fitter - testing only!!!!
-    GaussianFitter fitter(hist_signal);
+    GaussianFitter fitter(&hist_signal);
     fitter.Fit();
     TF1* fit = fitter.GetFitFunction();
     fit->SetLineColor(kRed);
@@ -95,7 +95,7 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
         cvs_channel_spectra->cd()->SetTickx();
         cvs_channel_spectra->cd()->SetTicky();
         hist_background.DrawCopy("SAME");
-      
+        
         histname = sourcePtr->GetBackgroundName() + SPECTRAEXT + std::to_string(_channel);
         if(_savePlots)
             WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
@@ -124,13 +124,22 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
         TH1F hist_background = sourcePtr->GetBackgroundSpectraHistVtr().at(ch);
         TH1F hist_sigMinusBkg = sourcePtr->GetSMinusBSpectraHistVtr().at(ch);
         
-        NormaliseHistogram(hist_signal);
-        NormaliseHistogram(hist_background);
+        //NormaliseHistogram(hist_signal);
+        //NormaliseHistogram(hist_background);
         
         SetupHistogram(hist_signal,1);
         PolishHistogram(hist_signal,"Q_{long}","Normalised count");
         cvs_channel_spectra->cd(ch+1);
         if(hist_signal.GetEntries() >0)hist_signal.DrawCopy("HIST");
+        
+        //add fitter - testing only!!!!
+        GaussianFitter fitter(&hist_signal);
+        fitter.Fit();
+        TF1* fit = fitter.GetFitFunction();
+        fit->SetLineColor(kRed);
+        fit->SetLineWidth(2);
+        fit->DrawCopy("SAME");
+        fitter.PrintDetails();
         
         TString histname = sourcePtr->GetSignalName() + SPECTRAEXT + std::to_string(ch);
         if(_savePlots)
@@ -611,7 +620,7 @@ void Plotter::NormaliseHistogram(TH1F& hist)
 {  
     double factor = static_cast<double>(hist.GetEntries());
     hist.Scale(1.0/factor);
-    SetErrorBars(hist,factor);
+    //SetErrorBars(hist,factor);
 }
 
 void Plotter::SetErrorBars(TH1F& hist, const double scale)
