@@ -96,18 +96,8 @@ void Manager::Initialise()
 
 void Manager::Process()
 {
-    for(int i=0;i<_signalTreeVtr.size();++i)
-    {
-        if(!_signalTreeVtr.at(i))continue;
-        _handler->ProcessData(_signalTreeVtr.at(i),true,_timeCutOff);
-    }
-    for(int i=0;i<_backgrTreeVtr.size();++i)
-    {
-        if(!_backgrTreeVtr.at(i))continue;
-        _handler->ProcessData(_backgrTreeVtr.at(i),false,_timeCutOff);
-    }
-    
-    _handler->SubtractBackground();
+    _handler->Process(_signalTreeVtr,true,_timeCutOff);
+    _handler->Process(_backgrTreeVtr,false,_timeCutOff);
     _handler->SetupSource();
 }
 

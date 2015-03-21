@@ -16,7 +16,7 @@ public:
     GaussianFitter(TH1F* hist);
     ~GaussianFitter();
     
-    void Fit();
+    TF1* Fit();
     void FitInRange(double mean, double minX, double maxX);
     
     TF1* GetFitFunction();

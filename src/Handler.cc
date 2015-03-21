@@ -9,89 +9,109 @@ Handler::Handler(TString signalName,TString backgroundName,int binning,double te
     _source = std::make_shared<Source>(signalName, backgroundName);
     _source->SetTemperature(temp);
     _source->SetPressure(press);
+    
+    _h1_channelSpectra = nullptr;
+    _h1_channelQShort = nullptr;
+    _h1_channelPsd = nullptr;
+    _h2_channelSpectra = nullptr;
+    
+    _h1Vtr_channelsSpectraSig.resize(0);
+    _h1Vtr_channelsQShortSig.resize(0);
+    _h2Vtr_channelsSpectraSig.resize(0);
+    _h1Vtr_channelsSpectraBkg.resize(0);
+    _h1Vtr_channelsQShortBkg.resize(0);
+    _h1Vtr_channelsPsdSig.resize(0);
+    _h1Vtr_channelsPsdBkg.resize(0);
+    _h1Vtr_channelsSpectraSigMinusBkg.resize(0);
 }
 
 Handler::~Handler()
 {
 }
 
-void Handler::InitialiseHistograms(int channel,bool signal)
+void Handler::InitialiseHistograms(bool signal)
 {
-    //Histograms names
-    TString histname_spectra    = Form("h1_channel_spectra_%i",channel);
-    TString histname_qshort     = Form("h1_channel_qshort_%i",channel);
-    TString histname_spectra_2D = Form("h2_channel_spectra_%i",channel);
-    TString histname_psd        = Form("h1_channel_psd_%i",channel);
-
-    if(signal)
+    //channel data - loop over each channel
+    for(int channel = 0;channel<CHANNELS;channel++)
     {
-        if(_h1Vtr_channelsSpectraSig.size() != channel )
-            return;
-
-        histname_spectra    += "_sig";
-        histname_qshort     += "_sig";
-        histname_spectra_2D += "_sig";
-        histname_psd        += "_sig";
-    }
-    else
-    {
-        if(_h1Vtr_channelsSpectraBkg.size() != channel )
-            return;
+        //Histograms names
+        TString histname_spectra    = Form("h1_channel_spectra_%i",channel);
+        TString histname_qshort     = Form("h1_channel_qshort_%i",channel);
+        TString histname_spectra_2D = Form("h2_channel_spectra_%i",channel);
+        TString histname_psd        = Form("h1_channel_psd_%i",channel);
         
-        histname_spectra    += "_bkg";
-        histname_qshort     += "_bkg";
-        histname_spectra_2D += "_null";
-        histname_psd        += "_bkg";
-    }
-
-    //Create histograms
-    _h1_channelSpectra  = new TH1F(histname_spectra,
-                                   histname_spectra,
-                                   1024/_binningFactor,
-                                   0,
-                                   32768/4);
-    
-    _h1_channelQShort   = new TH1F(histname_qshort,
-                                   histname_qshort,
-                                   1024/_binningFactor,
-                                   0,
-                                   32768/4);
-    
-    _h1_channelPsd      = new TH1F(histname_psd,
-                                   histname_psd,
-                                   400/_binningFactor,
-                                   0,
-                                   1);
-    
-    _h2_channelSpectra  = new TH2F(histname_spectra_2D,
-                                   histname_spectra_2D,
-                                   1024/_binningFactor,
-                                   0,
-                                   32768/4,
-                                   1000/_binningFactor,
-                                   0,
-                                   1);
-    
-
-    // Add histograms to vectors
-    if(signal)
-    {
-        _h1Vtr_channelsSpectraSig.push_back(_h1_channelSpectra);
-        _h1Vtr_channelsQShortSig.push_back(_h1_channelQShort);
-        _h2Vtr_channelsSpectraSig.push_back(_h2_channelSpectra);
-        _h1Vtr_channelsPsdSig.push_back(_h1_channelPsd);
-    }
-    else
-    {
-        _h1Vtr_channelsSpectraBkg.push_back(_h1_channelSpectra);
-        _h1Vtr_channelsQShortBkg.push_back(_h1_channelQShort);
-        _h1Vtr_channelsPsdBkg.push_back(_h1_channelPsd);
+        if(signal)
+        {
+            if(_h1Vtr_channelsSpectraSig.size() != channel )
+                return;
+            
+            histname_spectra    += "_sig";
+            histname_qshort     += "_sig";
+            histname_spectra_2D += "_sig";
+            histname_psd        += "_sig";
+        }
+        else
+        {
+            if(_h1Vtr_channelsSpectraBkg.size() != channel )
+                return;
+            
+            histname_spectra    += "_bkg";
+            histname_qshort     += "_bkg";
+            histname_spectra_2D += "_null";
+            histname_psd        += "_bkg";
+        }
+        
+        //Create histograms
+        _h1_channelSpectra  = new TH1F(histname_spectra,
+                                       histname_spectra,
+                                       1024/_binningFactor,
+                                       0,
+                                       32768/4);
+        
+        _h1_channelQShort   = new TH1F(histname_qshort,
+                                       histname_qshort,
+                                       1024/_binningFactor,
+                                       0,
+                                       32768/4);
+        
+        _h1_channelPsd      = new TH1F(histname_psd,
+                                       histname_psd,
+                                       400/_binningFactor,
+                                       0,
+                                       1);
+        
+        if(signal)
+        {
+            _h2_channelSpectra  = new TH2F(histname_spectra_2D,
+                                           histname_spectra_2D,
+                                           1024/_binningFactor,
+                                           0,
+                                           32768/4,
+                                           1000/_binningFactor,
+                                           0,
+                                           1);
+        }
+        
+        // Add histograms to vectors
+        if(signal)
+        {
+            _h1Vtr_channelsSpectraSig.push_back(_h1_channelSpectra);
+            _h1Vtr_channelsQShortSig.push_back(_h1_channelQShort);
+            _h2Vtr_channelsSpectraSig.push_back(_h2_channelSpectra);
+            _h1Vtr_channelsPsdSig.push_back(_h1_channelPsd);
+        }
+        else
+        {
+            _h1Vtr_channelsSpectraBkg.push_back(_h1_channelSpectra);
+            _h1Vtr_channelsQShortBkg.push_back(_h1_channelQShort);
+            _h1Vtr_channelsPsdBkg.push_back(_h1_channelPsd);
+        }
     }
 }
 
-void Handler::FillHistograms(int channel,bool signal,float Qlong,float Qshort)
+void Handler::FillHistograms(int channel,bool signal,float Qlong,float Qshort, float shift)
 {
-    float diff = ( Qlong - Qshort ) / Qlong;
+    float diff = ( Qlong - Qshort ) / (Qlong + shift);
     //std::cout << "\nQLong: " << Qlong << ",QShort: " << Qshort <<", Diff: "<< diff;
     
     //it should not be possible to have negative psd as qlong is total integral of waveform
@@ -99,20 +119,40 @@ void Handler::FillHistograms(int channel,bool signal,float Qlong,float Qshort)
     
     if(signal)
     {
-        _h1Vtr_channelsSpectraSig.at(channel)->Fill(Qlong);
-        _h1Vtr_channelsQShortSig.at(channel)->Fill(Qshort);
-        _h2Vtr_channelsSpectraSig.at(channel)->Fill(Qlong,diff);
+        _h1Vtr_channelsSpectraSig.at(channel)->Fill(Qlong + shift);
+        _h1Vtr_channelsQShortSig.at(channel)->Fill(Qshort + shift);
+        _h2Vtr_channelsSpectraSig.at(channel)->Fill(Qlong + shift,diff);
         _h1Vtr_channelsPsdSig.at(channel)->Fill(diff);
     }
     else
     {
-        _h1Vtr_channelsSpectraBkg.at(channel)->Fill(Qlong);
-        _h1Vtr_channelsQShortBkg.at(channel)->Fill(Qshort);
+        _h1Vtr_channelsSpectraBkg.at(channel)->Fill(Qlong + shift);
+        _h1Vtr_channelsQShortBkg.at(channel)->Fill(Qshort + shift);
         _h1Vtr_channelsPsdBkg.at(channel)->Fill(diff);
     }
 }
 
-void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
+void Handler::Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInSecs)
+{
+    InitialiseHistograms(signal);
+    
+    for(int i=0;i<treePtr.size();++i)
+    {
+        if(!treePtr.at(i))continue;
+        ProcessData(treePtr.at(i),signal,timeCutOffInSecs, 0);
+    }
+    
+//    std::vector<double> shifts = ShiftToCommonPeak(signal);
+//    
+//    ResetHistograms(signal);
+//    for(int i=0;i<treePtr.size();++i)
+//    {
+//        if(!treePtr.at(i))continue;
+//        ProcessData(treePtr.at(i),signal,timeCutOffInSecs, 0);//shifts[i]);
+//    }
+}
+
+void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs, float shift)
 {
     //setup the branches
     //parameters
@@ -129,7 +169,6 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
     for(int channel = 0;channel<CHANNELS;channel++)
     {
         TBranch* br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
-        InitialiseHistograms(channel,signal);
       
         //Is the branch valid?
         if (br_channel_data!=nullptr && br_channel_data->GetEntries()!=0)
@@ -151,7 +190,7 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
                 float Qlong = _data.qlong;
                 float Qshort = _data.qshort;
 	      
-                FillHistograms(channel,signal,Qlong,Qshort);
+                FillHistograms(channel,signal,Qlong,Qshort, shift);
 	      
             }//end loop over events
 	  
@@ -160,46 +199,53 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
     } //end loop over channels
 }
 
-void Handler::SubtractBackground()
+const std::vector<double> Handler::ShiftToCommonPeak(bool signal)
 {
-
-  for(int ch =0;ch<_h1Vtr_channelsSpectraSig.size();ch++)
+    const double commonPeakValue = 2000.0;
+    
+    double mean = 0;
+    double shift = 0;
+    TF1* fit;
+    std::vector<double> shifts;
+    
+    std::vector<TH1F*>* qlong_hists;
+    std::vector<TH1F*>* qshort_hists;
+    
+    if(signal)
     {
-      TString histname_spectra = Form("h1_channel_spectra_%i_s-b",ch);
-      _h1_channelSpectra = new TH1F(histname_spectra,histname_spectra,1024/_binningFactor,0,32768/4);
-      
-      //normalise them first
-      //NormaliseHistogram(h1_vector_channels_spectra_sig.at(ch));
-      //NormaliseHistogram(h1_vector_channels_spectra_bkg.at(ch));
-      
-      //loop over bins and take value from each
-      for(int bin=1;bin<_h1Vtr_channelsSpectraSig.at(ch)->GetNbinsX();bin++)
-	{
-	  int bincontentT = _h1Vtr_channelsSpectraSig.at(ch)->GetBinContent(bin);
-	  int bincontentB = _h1Vtr_channelsSpectraBkg.at(ch)->GetBinContent(bin);
-	  
-	  int bincontentDiff = bincontentT - bincontentB;
-	  int bincontentDiffSq = TMath::Power((bincontentT - bincontentB),2);
-	  //only positive difference
-	  if(bincontentDiff<0)bincontentDiff = -bincontentDiff;
-	  
-	  _h1_channelSpectra->SetBinContent(bin,bincontentDiff);
-	  
-	  // 	  std::cout << "\nBin: " << bin << ", Total entries: " << bincontentT 
-	  // 			<< ", Background entries: " << bincontentB;
-	  
-	}
-      /*
-  	if(h1_vector_channels_spectra_bkg.size()>=ch){
-	h1_channel_spectra->Add(h1_vector_channels_spectra_sig.at(ch),
-	h1_vector_channels_spectra_bkg.at(ch),1,-1);
-	}
- 	else h1_channel_spectra->Add(h1_vector_channels_spectra_sig.at(ch),1);
-      */
-      //NormaliseHistogram(h1_channel_spectra);
-      _h1Vtr_channelsSpectraSigMinusBkg.push_back(_h1_channelSpectra);
-      
+        qlong_hists = &_h1Vtr_channelsSpectraSig;
+        qshort_hists = &_h1Vtr_channelsQShortSig;
     }
+    else
+    {
+        qlong_hists = &_h1Vtr_channelsSpectraBkg;
+        qshort_hists = &_h1Vtr_channelsQShortBkg;
+    }
+    
+    // Qlong
+    for(int i=0;i<qlong_hists->size();++i)
+    {
+        //Peak fitter
+        GaussianFitter fitter(qlong_hists->at(i));
+        fit = fitter.Fit();
+        mean = fitter.GetMean();
+        shift = commonPeakValue - mean;
+        shifts.push_back(shift);
+        Utils::ScaleXaxis(qlong_hists->at(i),1,shift);
+    }
+    
+    // Qshort - must be shifted the same as qlong
+    for(int i=0;i<qshort_hists->size();++i)
+    {
+        //Peak fitter
+        GaussianFitter fitter(qshort_hists->at(i));
+        fit = fitter.Fit();
+        mean = fitter.GetMean();
+        shift = shifts[i];
+        Utils::ScaleXaxis(qshort_hists->at(i),1,shift);
+    }
+    
+    return shifts;
 }
 
 void Handler::SetupSource()
@@ -224,6 +270,25 @@ void Handler::SetupSource()
     for(int i=0;i<_h1Vtr_channelsSpectraSigMinusBkg.size();i++)
     {
         _source->AddSpectraToSMinusBHistVtr(*_h1Vtr_channelsSpectraSigMinusBkg.at(i));
+    }
+}
+
+void Handler::ResetHistograms(bool signal)
+{
+    Option_t* option = "ICES";
+    
+    if(signal)
+    {
+        for(int i=0;i<_h1Vtr_channelsSpectraSig.size();i++) _h1Vtr_channelsSpectraSig[i]->Reset(option);
+        for(int i=0;i<_h1Vtr_channelsQShortSig.size();i++) _h1Vtr_channelsQShortSig[i]->Reset(option);
+        for(int i=0;i<_h2Vtr_channelsSpectraSig.size();i++) _h2Vtr_channelsSpectraSig[i]->Reset(option);
+        for(int i=0;i<_h1Vtr_channelsPsdSig.size();i++) _h1Vtr_channelsPsdSig[i]->Reset(option);
+    }
+    else
+    {
+        for(int i=0;i<_h1Vtr_channelsSpectraBkg.size();i++) _h1Vtr_channelsSpectraBkg[i]->Reset(option);
+        for(int i=0;i<_h1Vtr_channelsQShortBkg.size();i++) _h1Vtr_channelsQShortBkg[i]->Reset(option);
+        for(int i=0;i<_h1Vtr_channelsPsdBkg.size();i++) _h1Vtr_channelsPsdBkg[i]->Reset(option);
     }
 }
 

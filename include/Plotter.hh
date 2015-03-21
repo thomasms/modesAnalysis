@@ -58,6 +58,7 @@ private:
     
     const int FindCanvas(const TString& name);
     void SetupHistogram(TH1F& hist,int option);
+    void ChangeRangeToFitBoth(TH1F& hist_signal, TH1F& hist_background);
     void SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel);
     void WriteGraphs(const std::shared_ptr<Source> sourcePtr, int channel);
     void ResetCanvases();

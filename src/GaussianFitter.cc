@@ -12,16 +12,17 @@ GaussianFitter::~GaussianFitter()
     delete _fit;
 }
 
-void GaussianFitter::Fit()
+TF1* GaussianFitter::Fit()
 {
     FitPeak();
+    return _fit;
 }
 
 void GaussianFitter::FitInRange(double mean, double minX, double maxX)
 {
     SetMean(mean);
     _fit->SetRange(minX,maxX);
-    _hist->Fit("Fit","Q0R");
+    _hist->Fit("Fit","QOR");
 }
 
 TF1* GaussianFitter::GetFitFunction()

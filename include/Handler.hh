@@ -12,6 +12,7 @@
 #include "TTree.h"
 #include "TLine.h"
 #include "TString.h"
+#include "TF1.h"
 #include "TH1.h"
 #include "TH2.h"
 #include "TGraph.h"
@@ -27,6 +28,8 @@
 #include "TPad.h"
 #include "TRandom3.h"
 
+#include "GaussianFitter.hh"
+#include "Utils.hh"
 #include "dataLib.hh"
 
 const int CHANNELS = 8;
@@ -39,16 +42,20 @@ public:
     Handler(TString signalName,TString backgroundName,int binning,double temp,double pres);
     ~Handler();
   
-    void ProcessData(TTree* treePtr, bool signal, float timeCutOffInMins=5);
-    void InitialiseHistograms(int channel, bool signal);
-    void FillHistograms(int channel, bool signal, float Qlong, float Qshort);
-    void SubtractBackground();
+    void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5);
     void SetupSource();
       
     EventParameters GetParameters(int event);
     EventData GetData(int event);
     
     std::shared_ptr<Source> GetSourcePtr() {return _source;};
+private:
+    void InitialiseHistograms(bool signal);
+    void ProcessData(TTree* treePtr, bool signal, float timeCutOffInMins, float shift=0);
+    void FillHistograms(int channel, bool signal, float Qlong, float Qshort, float shift);
+    void ResetHistograms(bool signal);
+    const std::vector<double> ShiftToCommonPeak(bool signal);
+    
 private:
   
     EventParameters          _parameters;
@@ -71,6 +78,7 @@ private:
     std::vector<TH1F*> _h1Vtr_channelsSpectraSigMinusBkg;
     std::vector<TH1F*> _h1Vtr_channelsPsdSig;
     std::vector<TH1F*> _h1Vtr_channelsPsdBkg;
+    
     
 };
 
