@@ -1,4 +1,4 @@
-channel				0
+channel				-1
 files				1
 
 showBackground			1
@@ -8,6 +8,8 @@ backgroundName			co60
 savePlots			0
 
 signalFile 			../../data/fastNeutron_tests/PuBe-det23_04.root
+#signalFile			../../data/fastNeutron_tests/60co-det23_07.root
+#signalFile			../../data/fastNeutron_tests/137cs-det23_01.root
 backgroundFile			../../data/fastNeutron_tests/60co-det23_07.root
 #backgroundFile  		../../data/fastNeutron_tests/137cs-det23_01.root
 

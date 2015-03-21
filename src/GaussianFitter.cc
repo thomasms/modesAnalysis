@@ -1,9 +1,10 @@
+
 #include "GaussianFitter.hh"
 
 GaussianFitter::GaussianFitter(TH1F* hist) : _minNDF(20)
 {
     _hist = hist;
-    _fit = new TF1("Fit","gaus");
+    _fit = new TF1("Fit", "gaus");
 }
 
 GaussianFitter::~GaussianFitter()
@@ -13,14 +14,14 @@ GaussianFitter::~GaussianFitter()
 
 void GaussianFitter::Fit()
 {
-    OptimiseFit();
+    FitPeak();
 }
 
 void GaussianFitter::FitInRange(double mean, double minX, double maxX)
 {
     SetMean(mean);
     _fit->SetRange(minX,maxX);
-    _hist->Fit("Fit","Q0BR");
+    _hist->Fit("Fit","Q0R");
 }
 
 TF1* GaussianFitter::GetFitFunction()
@@ -56,7 +57,6 @@ void GaussianFitter::SetMean(const double mean)
 {
     _fit->SetParameter(1, mean);
     _fit->FixParameter(1, mean);
-    
     //must set sigma limits otherwise yields wierd results
     _fit->SetParLimits(2, _hist->GetXaxis()->GetXmin(), _hist->GetXaxis()->GetXmax());
 }
@@ -86,59 +86,80 @@ void GaussianFitter::PrintDetails()
               << "\nChiSquare/NDF: " <<GetChiSquarePerNDF() << std::endl;
 }
 
-void GaussianFitter::OptimiseFit()
+void GaussianFitter::FitPeak()
 {
-    double firstMeanGuess = _hist->GetXaxis()->GetBinCenter(_hist->GetMaximumBin());
-    double binWidth = _hist->GetXaxis()->GetBinWidth(0);
-    double minX = _hist->GetXaxis()->GetXmin();
-    double maxX = _hist->GetXaxis()->GetXmax();
+    TSpectrum peakFinder(200);
+    int nPeaksFound = peakFinder.Search(_hist,1,"SAME");
     
-    // Initial fit
-    FitInRange(firstMeanGuess, minX,maxX);
-    
-    //refine the range to within 3 sigma
-    minX = firstMeanGuess - 3*TMath::Abs(GetSigma());
-    maxX = firstMeanGuess + 3*TMath::Abs(GetSigma());
-    _fit->SetRange(minX,maxX);
-    
-    double bestChiSquare = 0;
-    double ndf =_fit->GetNDF();
-
-    //Now alter mean
-    _fit->ReleaseParameter(1);
-    ResetParameterLimits();
-    
-    int counter = 0;
-    const int limit = 20;
-    
-    while( ndf >_minNDF )
+    double* xPeaks = peakFinder.GetPositionX();
+    int npeaks = 0;
+    double highestPeak = 0;
+    double peakMean = 0;
+    for(int p=0;p<nPeaksFound;++p)
     {
-        if(bestChiSquare==0)
-            bestChiSquare = GetChiSquarePerNDF();
-
-        minX += binWidth/2.0;
-        maxX -= binWidth/2.0;
+        Float_t mean = xPeaks[p];
+        Int_t bin = _hist->GetXaxis()->FindBin(mean);
+        Float_t value = _hist->GetBinContent(bin);
         
-        _fit->SetRange(minX,maxX);
-        _hist->Fit("Fit","QNBR");
-        ndf =_fit->GetNDF();
-
-        if((bestChiSquare <= GetChiSquarePerNDF()) || (counter == limit))
-            break;
-
-        counter++;
+        if(value > highestPeak)
+        {
+            highestPeak = value;
+            peakMean = mean;
+        }
+        npeaks++;
     }
-    _hist->Fit("Fit","Q0BR");
     
+    const double threshold = highestPeak*0.8;
+    
+    // Get the bin where value falls below threshold
+    int lowBin  = 0;
+    int highBin = 0;
+    bool lowBinSet = false;
+    bool highBinSet = false;
+    double prevBinContent = 0;
+    for(int bin=0;bin<_hist->GetNbinsX();++bin)
+    {
+        double binContent = _hist->GetBinContent(bin);
+        if((prevBinContent <threshold) && (binContent >=threshold) && (lowBinSet == false))
+        {
+            lowBin = bin;
+            lowBinSet = true;
+        }
+        if((prevBinContent >threshold) && (binContent <=threshold) && (highBinSet == false))
+        {
+            highBin = bin;
+            highBinSet = true;
+        }
+        prevBinContent = binContent;
+    }
+    
+    double minX = _hist->GetBinCenter(lowBin) - _hist->GetXaxis()->GetBinWidth(lowBin);
+    double maxX = _hist->GetBinCenter(highBin);
+    FitInRange(peakMean, minX, maxX);
+
 }
 
 void GaussianFitter::ResetParameterLimits()
 {
+    _fit->ReleaseParameter(1);
+    _fit->ReleaseParameter(2);
     _fit->SetParLimits(1, _hist->GetXaxis()->GetXmin(), _hist->GetXaxis()->GetXmax());
     _fit->SetParLimits(2, _hist->GetXaxis()->GetXmin(), _hist->GetXaxis()->GetXmax());
 }
 
-
+double GaussianFitter::PeakFunction(double *x, double *par)
+{
+    int npeaks = 30;
+    double result = par[0] + par[1]*x[0];
+    for (int p=0;p<npeaks;p++)
+    {
+        double norm  = par[3*p+2];
+        double mean  = par[3*p+3];
+        double sigma = par[3*p+4];
+        result += norm*TMath::Gaus(x[0],mean,sigma);
+    }
+    return result;
+}
 
 
 

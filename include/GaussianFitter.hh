@@ -2,7 +2,10 @@
 #define GAUSSIAN_FITTER_HH
 
 #include "TH1.h"
+#include "TMath.h"
 #include "TF1.h"
+#include "TSpectrum.h"
+#include "TVirtualFitter.h"
 
 class GaussianFitter
 {
@@ -31,7 +34,8 @@ public:
     void PrintDetails();
     
 private:
-    void OptimiseFit();
+    static double PeakFunction(double *x, double *par);
+    void FitPeak();
     void ResetParameterLimits();
     
 private:

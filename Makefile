@@ -22,7 +22,7 @@ RM=rm -f
 
 CFLAGS = -c -g -std=c++11 -I$(IDIR) -I$(shell root-config --incdir)
 LDFLAGS = -g -Wall
-LDLIBS = $(shell root-config --glibs)
+LDLIBS = $(shell root-config --glibs) -lSpectrum
 
 TARGET = run
 

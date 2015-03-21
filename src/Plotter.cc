@@ -5,6 +5,7 @@ const static TString SPECTRAEXT = "_ch";
 const static TString QSHORTEXT = "_qshort_ch";
 const static TString PSDEXT = "_psd_ch";
 const static TString FOMEXT = "_fom_ch";
+const static Color_t FITCOLOR = kBlue;
 
 Plotter::Plotter(int channel, bool savePlots) : 
 		_channel(channel),
@@ -64,22 +65,15 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
     TH1F hist_background  = sourcePtr->GetBackgroundSpectraHistVtr().at(_channel);
     TH1F hist_sigMinusBkg = sourcePtr->GetSMinusBSpectraHistVtr().at(_channel);
 
-    //NormaliseHistogram(hist_signal);
-    //NormaliseHistogram(hist_background);
+    NormaliseHistogram(hist_signal);
+    NormaliseHistogram(hist_background);
     
     SetupHistogram(hist_signal,1);
     PolishHistogram(hist_signal,"Q_{long}","Normalised count");
     cvs_channel_spectra->cd();
+    cvs_channel_spectra->cd()->SetTickx();
+    cvs_channel_spectra->cd()->SetTicky();
     hist_signal.DrawCopy("HIST");
-    
-    //add fitter - testing only!!!!
-    GaussianFitter fitter(&hist_signal);
-    fitter.Fit();
-    TF1* fit = fitter.GetFitFunction();
-    fit->SetLineColor(kRed);
-    fit->SetLineWidth(2);
-    fit->DrawCopy("SAME");
-    fitter.PrintDetails();
     
     TString histname = sourcePtr->GetSignalName() + SPECTRAEXT + std::to_string(_channel);
     if(_savePlots)
@@ -124,23 +118,25 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
         TH1F hist_background = sourcePtr->GetBackgroundSpectraHistVtr().at(ch);
         TH1F hist_sigMinusBkg = sourcePtr->GetSMinusBSpectraHistVtr().at(ch);
         
-        //NormaliseHistogram(hist_signal);
-        //NormaliseHistogram(hist_background);
+        NormaliseHistogram(hist_signal);
+        NormaliseHistogram(hist_background);
         
         SetupHistogram(hist_signal,1);
         PolishHistogram(hist_signal,"Q_{long}","Normalised count");
         cvs_channel_spectra->cd(ch+1);
+        cvs_channel_spectra->cd(ch+1)->SetTickx();
+        cvs_channel_spectra->cd(ch+1)->SetTicky();
         if(hist_signal.GetEntries() >0)hist_signal.DrawCopy("HIST");
         
-        //add fitter - testing only!!!!
+        // Peak fitter
         GaussianFitter fitter(&hist_signal);
         fitter.Fit();
         TF1* fit = fitter.GetFitFunction();
-        fit->SetLineColor(kRed);
+        fit->SetLineColor(FITCOLOR);
         fit->SetLineWidth(2);
         fit->DrawCopy("SAME");
-        fitter.PrintDetails();
-        
+        //fitter.PrintDetails();
+                
         TString histname = sourcePtr->GetSignalName() + SPECTRAEXT + std::to_string(ch);
         if(_savePlots)
             WriteToFile<TH1F>(hist_signal,histname,PLOTSFILENAME);
@@ -155,6 +151,15 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
             cvs_channel_spectra->cd(ch+1)->SetTickx();
             cvs_channel_spectra->cd(ch+1)->SetTicky();
             if(hist_background.GetEntries() >0)hist_background.DrawCopy("SAME");
+            
+            //Peak fitter
+            fitter.SetHistogram(&hist_background);
+            fitter.Fit();
+            fit = fitter.GetFitFunction();
+            fit->SetLineColor(FITCOLOR);
+            fit->SetLineWidth(2);
+            fit->DrawCopy("SAME");
+            //fitter.PrintDetails();
  
             histname = sourcePtr->GetBackgroundName() + SPECTRAEXT + std::to_string(ch);
             if(_savePlots)WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
@@ -182,9 +187,6 @@ void Plotter::DrawQShort(const std::shared_ptr<Source> sourcePtr, bool showBackg
         canvases.push_back(cvs_channel_qshort);
     }
     
-    cvs_channel_qshort->cd()->SetTickx();
-    cvs_channel_qshort->cd()->SetTicky();
-    
     if(_channel<0)
     {
         DrawQShortAll(sourcePtr, showBackground);
@@ -204,6 +206,8 @@ void Plotter::DrawQShort(const std::shared_ptr<Source> sourcePtr, bool showBackg
     SetupHistogram(hist_signal,1);
     PolishHistogram(hist_signal,"Q_{short}","Normalised count");
     cvs_channel_qshort->cd();
+    cvs_channel_qshort->cd()->SetTickx();
+    cvs_channel_qshort->cd()->SetTicky();
     hist_signal.DrawCopy("HIST");
     
     TString histname = sourcePtr->GetSignalName() + QSHORTEXT + std::to_string(_channel);
@@ -239,15 +243,24 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
         TH1F hist_signal = sourcePtr->GetSignalQShortHistVtr().at(ch);
         TH1F hist_background = sourcePtr->GetBackgroundQShortHistVtr().at(ch);
         
-        cvs_channel_qshort->cd(ch+1);
-        
         NormaliseHistogram(hist_signal);
         NormaliseHistogram(hist_background);
         
         SetupHistogram(hist_signal,1);
         PolishHistogram(hist_signal,"Q_{long}","Normalised count");
         cvs_channel_qshort->cd(ch+1);
+        cvs_channel_qshort->cd(ch+1)->SetTickx();
+        cvs_channel_qshort->cd(ch+1)->SetTicky();
         if(hist_signal.GetEntries() >0)hist_signal.DrawCopy("HIST");
+        
+        //Peak fitter
+        GaussianFitter fitter(&hist_signal);
+        fitter.Fit();
+        TF1* fit = fitter.GetFitFunction();
+        fit->SetLineColor(FITCOLOR);
+        fit->SetLineWidth(2);
+        fit->DrawCopy("SAME");
+        //fitter.PrintDetails();
         
         TString histname = sourcePtr->GetSignalName() + QSHORTEXT + std::to_string(ch);
         if(_savePlots)
@@ -259,6 +272,15 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
             cvs_channel_qshort->cd(ch+1)->SetTickx();
             cvs_channel_qshort->cd(ch+1)->SetTicky();
             if(hist_background.GetEntries() >0)hist_background.DrawCopy("SAME");
+            
+            //Peak fitter
+            fitter.SetHistogram(&hist_background);
+            fitter.Fit();
+            fit = fitter.GetFitFunction();
+            fit->SetLineColor(FITCOLOR);
+            fit->SetLineWidth(2);
+            fit->DrawCopy("SAME");
+            //fitter.PrintDetails();
             
             histname = sourcePtr->GetBackgroundName() + QSHORTEXT + std::to_string(ch);
             if(_savePlots)WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
@@ -350,7 +372,16 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
         PolishHistogram(hist_signal,"(Q_{long} - Q_{short})/Q_{long}","Normalised count");
         hist_signal.GetYaxis()->SetTitleOffset(1.4);
         if(hist_signal.GetEntries()>0)hist_signal.DrawCopy("HIST");
-      
+        
+        //Peak fitter
+        GaussianFitter fitter(&hist_signal);
+        fitter.Fit();
+        TF1* fit = fitter.GetFitFunction();
+        fit->SetLineColor(FITCOLOR);
+        fit->SetLineWidth(2);
+        fit->DrawCopy("SAME");
+        //fitter.PrintDetails();
+        
         TString histname = sourcePtr->GetSignalName() + PSDEXT + std::to_string(ch);
         if(_savePlots)
             WriteToFile<TH1F>(hist_signal,histname,PLOTSFILENAME);
@@ -361,6 +392,15 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
             cvs_channel_psd->cd(ch+1)->SetTickx();
             cvs_channel_psd->cd(ch+1)->SetTicky();
             if(hist_background.GetEntries()>0)hist_background.DrawCopy("SAME");
+            
+            // Peak fitter
+            fitter.SetHistogram(&hist_background);
+            fitter.Fit();
+            fit = fitter.GetFitFunction();
+            fit->SetLineColor(FITCOLOR);
+            fit->SetLineWidth(2);
+            fit->DrawCopy("SAME");
+            //fitter.PrintDetails();
  
             histname = sourcePtr->GetBackgroundName() + PSDEXT + std::to_string(ch);
             if(_savePlots)
@@ -569,6 +609,8 @@ void Plotter::UpdateCanvases()
 {
     for(int i=0;i<canvases.size();++i)
     {
+        canvases[i]->SetTickx();
+        canvases[i]->SetTicky();
         canvases[i]->Update();
     }
 }

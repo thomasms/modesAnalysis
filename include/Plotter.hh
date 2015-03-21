@@ -23,6 +23,7 @@
 #include "TPaveLabel.h"
 #include "TSystem.h"
 #include "TCanvas.h"
+#include "TSpectrum.h"
 #include "THistPainter.h"
 #include "TPad.h"
 #include "TRandom3.h"
