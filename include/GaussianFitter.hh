@@ -6,6 +6,10 @@
 #include "TF1.h"
 #include "TSpectrum.h"
 #include "TVirtualFitter.h"
+#include "TPaveStats.h"
+#include "TText.h"
+#include "TLatex.h"
+#include "TList.h"
 
 class GaussianFitter
 {

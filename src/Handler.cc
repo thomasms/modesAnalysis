@@ -64,19 +64,19 @@ void Handler::InitialiseHistograms(bool signal)
         //Create histograms
         _h1_channelSpectra  = new TH1F(histname_spectra,
                                        histname_spectra,
-                                       1024/_binningFactor,
+                                       1000/_binningFactor,
                                        0,
-                                       32768/4);
+                                       10000);
         
         _h1_channelQShort   = new TH1F(histname_qshort,
                                        histname_qshort,
-                                       1024/_binningFactor,
+                                       1000/_binningFactor,
                                        0,
-                                       32768/4);
+                                       10000);
         
         _h1_channelPsd      = new TH1F(histname_psd,
                                        histname_psd,
-                                       400/_binningFactor,
+                                       1000/_binningFactor,
                                        0,
                                        1);
         
@@ -84,7 +84,7 @@ void Handler::InitialiseHistograms(bool signal)
         {
             _h2_channelSpectra  = new TH2F(histname_spectra_2D,
                                            histname_spectra_2D,
-                                           1024/_binningFactor,
+                                           1000/_binningFactor,
                                            0,
                                            32768/4,
                                            1000/_binningFactor,
@@ -109,50 +109,62 @@ void Handler::InitialiseHistograms(bool signal)
     }
 }
 
-void Handler::FillHistograms(int channel,bool signal,float Qlong,float Qshort, float shift)
+void Handler::FillHistograms(int channel,bool signal, bool psdOnly, float Qlong,float Qshort, float shiftQLong, float shiftQShort)
 {
-    float diff = ( Qlong - Qshort ) / (Qlong + shift);
+    float diff = ( Qlong  + shiftQLong - Qshort - shiftQShort) / (Qlong + shiftQLong);
     //std::cout << "\nQLong: " << Qlong << ",QShort: " << Qshort <<", Diff: "<< diff;
-    
-    //it should not be possible to have negative psd as qlong is total integral of waveform
-    if(diff <0)return;
     
     if(signal)
     {
-        _h1Vtr_channelsSpectraSig.at(channel)->Fill(Qlong + shift);
-        _h1Vtr_channelsQShortSig.at(channel)->Fill(Qshort + shift);
-        _h2Vtr_channelsSpectraSig.at(channel)->Fill(Qlong + shift,diff);
         _h1Vtr_channelsPsdSig.at(channel)->Fill(diff);
+        if(!psdOnly)
+        {
+            _h1Vtr_channelsSpectraSig.at(channel)->Fill(Qlong + shiftQLong);
+            _h1Vtr_channelsQShortSig.at(channel)->Fill(Qshort + shiftQShort);
+            _h2Vtr_channelsSpectraSig.at(channel)->Fill(Qlong + shiftQLong,diff);
+        }
     }
     else
     {
-        _h1Vtr_channelsSpectraBkg.at(channel)->Fill(Qlong + shift);
-        _h1Vtr_channelsQShortBkg.at(channel)->Fill(Qshort + shift);
         _h1Vtr_channelsPsdBkg.at(channel)->Fill(diff);
+        if(!psdOnly)
+        {
+            _h1Vtr_channelsSpectraBkg.at(channel)->Fill(Qlong + shiftQLong);
+            _h1Vtr_channelsQShortBkg.at(channel)->Fill(Qshort + shiftQShort);
+        }
     }
 }
 
-void Handler::Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInSecs)
+void Handler::Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInSecs, bool shift)
 {
     InitialiseHistograms(signal);
     
     for(int i=0;i<treePtr.size();++i)
     {
         if(!treePtr.at(i))continue;
-        ProcessData(treePtr.at(i),signal,timeCutOffInSecs, 0);
+        ProcessData(treePtr.at(i),signal, false, timeCutOffInSecs, 0, 0);
     }
     
-//    std::vector<double> shifts = ShiftToCommonPeak(signal);
-//    
-//    ResetHistograms(signal);
-//    for(int i=0;i<treePtr.size();++i)
-//    {
-//        if(!treePtr.at(i))continue;
-//        ProcessData(treePtr.at(i),signal,timeCutOffInSecs, 0);//shifts[i]);
-//    }
+    std::vector<TH1F*>* histVectorQLong = (signal) ? &_h1Vtr_channelsSpectraSig : &_h1Vtr_channelsSpectraBkg;
+    std::vector<TH1F*>* histVectorQShort = (signal) ? &_h1Vtr_channelsQShortSig : &_h1Vtr_channelsQShortBkg;
+    std::vector<TH1F*>* histVectorPsd = (signal) ? &_h1Vtr_channelsPsdSig : & _h1Vtr_channelsPsdBkg;
+    
+    if(shift)
+    {
+        auto shiftsQLong = ShiftToMeanHistPeak(histVectorQLong);
+        auto shiftsQShort = ShiftToMeanHistPeak(histVectorQShort);
+        
+        for(int i=0;i<treePtr.size();++i)
+        {
+            if(!treePtr.at(i))continue;
+            histVectorPsd->at(i)->Reset("ICES");
+            //redo psd only
+            ProcessData(treePtr.at(i),signal, true, timeCutOffInSecs, shiftsQLong[i], shiftsQShort[i]);
+        }
+    }
 }
 
-void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs, float shift)
+void Handler::ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeCutOffInSecs, float shiftQLong, float shiftQShort)
 {
     //setup the branches
     //parameters
@@ -164,85 +176,127 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs, f
     else return;
 
     br_para->GetEntry(0);
+    
+    std::vector<int> nEvents(CHANNELS,0);
 
-    //channel data - loop over each channel
+    TBranch* br_channel_data;
+    //channel data - get number of events of each channel first
     for(int channel = 0;channel<CHANNELS;channel++)
     {
-        TBranch* br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
-      
+        br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
+        nEvents[channel] = br_channel_data->GetEntries();
+        
+        if(channel%2 == 1)
+        {
+            if(nEvents[channel] > nEvents[channel-1])
+                nEvents[channel] = nEvents[channel-1];
+            else
+                nEvents[channel-1] = nEvents[channel];
+        }
+    }
+    
+    std::vector< std::vector<int> > badEvents;
+    //channel data - loop over again to get bad event indicies
+    for(int channel = 0;channel<CHANNELS;channel++)
+    {
+        std::vector<int> badChannelEvents;
+        br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
+        
         //Is the branch valid?
         if (br_channel_data!=nullptr && br_channel_data->GetEntries()!=0)
         {
             br_channel_data->SetAddress(&_data);
-	
+	            
             //loop over entries on each channel
-            for (int e=0; e<br_channel_data->GetEntries(); e++)
+            for (int e=0; e<nEvents[channel]; ++e)
             {
                 br_channel_data->GetEntry(e);
 	      
-                float time = (float)_data.timetag;
+                float time = static_cast<float>(_data.timetag);
                 float timeInSecs = time*1e-9;
-
-                //only count events before time set, -1 indicates all times
-                if(timeInSecs>timeCutOffInSecs && timeCutOffInSecs != -1)
-                    continue;
-
                 float Qlong = _data.qlong;
                 float Qshort = _data.qshort;
-	      
-                FillHistograms(channel,signal,Qlong,Qshort, shift);
-	      
+                float psd = (Qlong - Qshort) /Qlong;
+                
+                //only count events before time set, -1 indicates all times
+                //ignore negative times
+                // other cuts
+                if((timeInSecs>timeCutOffInSecs && timeCutOffInSecs != -1) || (timeInSecs <0) || (Qlong <= 0) || (Qshort <= 0) || (psd <= 0))
+                    badChannelEvents.push_back(1);
+                else
+                    badChannelEvents.push_back(0);
+                
             }//end loop over events
-	  
+            
         }//end conditional statement
       
+        // record bad events
+        badEvents.push_back(badChannelEvents);
+        
+    } //end loop over channels
+    
+    //loop over finally to only count good events and fill histograms
+    for(int channel = 0;channel<CHANNELS;channel++)
+    {
+        br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
+        
+        //Is the branch valid?
+        if (br_channel_data!=nullptr && br_channel_data->GetEntries()!=0)
+        {
+            br_channel_data->SetAddress(&_data);
+            
+            //loop over entries on each channel
+            for (int e=0; e<nEvents[channel]; ++e)
+            {
+                br_channel_data->GetEntry(e);
+                
+                float Qlong = _data.qlong;
+                float Qshort = _data.qshort;
+                
+                //Skip bad events for whole detector not per channel
+                if(channel%2==0)
+                    if((badEvents[channel][e] ==1) || (badEvents[channel+1][e] ==1))continue;
+                if(channel%2==1)
+                    if((badEvents[channel][e] ==1) || (badEvents[channel-1][e] ==1))continue;
+                    
+                FillHistograms(channel,signal, psdOnly, Qlong,Qshort, shiftQLong, shiftQShort);
+                
+            }//end loop over events
+            
+        }//end conditional statement
+        
     } //end loop over channels
 }
 
-const std::vector<double> Handler::ShiftToCommonPeak(bool signal)
+const std::vector<float> Handler::ShiftToMeanHistPeak(std::vector<TH1F*>* histVector)
 {
-    const double commonPeakValue = 2000.0;
-    
     double mean = 0;
     double shift = 0;
+    double meanOfMeans = 0;
+    
     TF1* fit;
-    std::vector<double> shifts;
+    std::vector<float> shifts;
+    std::vector<double> means;
     
-    std::vector<TH1F*>* qlong_hists;
-    std::vector<TH1F*>* qshort_hists;
-    
-    if(signal)
-    {
-        qlong_hists = &_h1Vtr_channelsSpectraSig;
-        qshort_hists = &_h1Vtr_channelsQShortSig;
-    }
-    else
-    {
-        qlong_hists = &_h1Vtr_channelsSpectraBkg;
-        qshort_hists = &_h1Vtr_channelsQShortBkg;
-    }
-    
-    // Qlong
-    for(int i=0;i<qlong_hists->size();++i)
+    // get the mean of the mean of channels
+    for(int i=0;i<histVector->size();++i)
     {
         //Peak fitter
-        GaussianFitter fitter(qlong_hists->at(i));
+        GaussianFitter fitter(histVector->at(i));
         fit = fitter.Fit();
         mean = fitter.GetMean();
-        shift = commonPeakValue - mean;
+        meanOfMeans += mean;
+        means.push_back(mean);
+    }
+    
+    meanOfMeans = meanOfMeans/static_cast<double>(means.size());
+    
+    // get the shift from the mean of means
+    for(int i=0;i<histVector->size();++i)
+    {
+        shift = meanOfMeans - means[i];
         shifts.push_back(shift);
-        Utils::ScaleXaxis(qlong_hists->at(i),1,shift);
-    }
-    
-    // Qshort - must be shifted the same as qlong
-    for(int i=0;i<qshort_hists->size();++i)
-    {
-        //Peak fitter
-        GaussianFitter fitter(qshort_hists->at(i));
-        fit = fitter.Fit();
-        mean = fitter.GetMean();
-        shift = shifts[i];
-        Utils::ScaleXaxis(qshort_hists->at(i),1,shift);
+        Utils::ScaleXaxis(histVector->at(i),1,shift);
     }
     
     return shifts;

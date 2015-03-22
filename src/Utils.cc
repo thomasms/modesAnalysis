@@ -22,7 +22,7 @@ void Utils::ScaleXaxis(TH1 *h, double scale, double shift)
 {
     if (!h) return; // just a precaution
     ScaleAxis(h->GetXaxis(), scale, shift);
-    h->ResetStats();
+    //h->ResetStats();
     h->GetXaxis()->SetRangeUser(0, h->GetXaxis()->GetXmax());
 }
 

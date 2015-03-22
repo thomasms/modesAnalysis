@@ -19,6 +19,7 @@
 #include "TMath.h"
 #include "TLegend.h"
 #include "TNtuple.h"
+#include "TPaveStats.h"
 #include "TPaveText.h"
 #include "TPaveLabel.h"
 #include "TSystem.h"
@@ -27,6 +28,7 @@
 #include "THistPainter.h"
 #include "TPad.h"
 #include "TRandom3.h"
+#include "TStyle.h"
 
 #include "dataLib.hh"
 #include "EfficiencyPlot.hh"

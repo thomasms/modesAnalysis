@@ -28,6 +28,7 @@ void Manager::InitDataCards()
   _cards->AddDataCardBool("showBackground", false);
   _cards->AddDataCardBool("savePlots", false);
   _cards->AddDataCardBool("logPlot", false);
+  _cards->AddDataCardBool("shiftToPsdSignalPeak", false);
   _cards->AddDataCardInt("numberOfExperiments", 100);
   _cards->AddDataCardInt("meanEvents", 500);
   _cards->AddDataCardInt("tubes", 4);
@@ -53,6 +54,7 @@ void Manager::LoadDataCards()
   _showBackground           = _cards->fetchValueBool("showBackground");
   _savePlots                = _cards->fetchValueBool("savePlots");
   _logPlot                  = _cards->fetchValueBool("logPlot");
+  _shiftToPsdSignalPeak     = _cards->fetchValueBool("shiftToPsdSignalPeak");
   _experiments              = _cards->fetchValueInt("numberOfExperiments");
   _meanNoEvents             = _cards->fetchValueInt("meanEvents");
   _tubes                    = _cards->fetchValueInt("tubes");
@@ -96,8 +98,8 @@ void Manager::Initialise()
 
 void Manager::Process()
 {
-    _handler->Process(_signalTreeVtr,true,_timeCutOff);
-    _handler->Process(_backgrTreeVtr,false,_timeCutOff);
+    _handler->Process(_signalTreeVtr,true,_timeCutOff,_shiftToPsdSignalPeak);
+    _handler->Process(_backgrTreeVtr,false,_timeCutOff,_shiftToPsdSignalPeak);
     _handler->SetupSource();
 }
 

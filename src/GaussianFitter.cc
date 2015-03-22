@@ -22,7 +22,7 @@ void GaussianFitter::FitInRange(double mean, double minX, double maxX)
 {
     SetMean(mean);
     _fit->SetRange(minX,maxX);
-    _hist->Fit("Fit","QOR");
+    _hist->Fit("Fit","QOIR");
 }
 
 TF1* GaussianFitter::GetFitFunction()
@@ -90,10 +90,9 @@ void GaussianFitter::PrintDetails()
 void GaussianFitter::FitPeak()
 {
     TSpectrum peakFinder(200);
-    int nPeaksFound = peakFinder.Search(_hist,1,"SAME");
+    int nPeaksFound = peakFinder.Search(_hist,1,"SAMES");
     
     double* xPeaks = peakFinder.GetPositionX();
-    int npeaks = 0;
     double highestPeak = 0;
     double peakMean = 0;
     for(int p=0;p<nPeaksFound;++p)
@@ -107,10 +106,10 @@ void GaussianFitter::FitPeak()
             highestPeak = value;
             peakMean = mean;
         }
-        npeaks++;
     }
     
-    const double threshold = highestPeak*0.8;
+    // 70% within the peak value
+    const double threshold = highestPeak*0.7;
     
     // Get the bin where value falls below threshold
     int lowBin  = 0;
@@ -121,12 +120,14 @@ void GaussianFitter::FitPeak()
     for(int bin=0;bin<_hist->GetNbinsX();++bin)
     {
         double binContent = _hist->GetBinContent(bin);
-        if((prevBinContent <threshold) && (binContent >=threshold) && (lowBinSet == false))
+        double nextBinContent = _hist->GetBinContent(bin+1);
+        double nextNextBinContent = _hist->GetBinContent(bin+2);
+        if((prevBinContent <threshold) && (binContent >=threshold) && (nextBinContent >=threshold) && (nextNextBinContent >=threshold) && (lowBinSet == false))
         {
             lowBin = bin;
             lowBinSet = true;
         }
-        if((prevBinContent >threshold) && (binContent <=threshold) && (highBinSet == false))
+        if((prevBinContent >threshold) && (binContent <=threshold) && (nextBinContent <=threshold) && (nextNextBinContent <=threshold) && (highBinSet == false))
         {
             highBin = bin;
             highBinSet = true;
@@ -137,7 +138,6 @@ void GaussianFitter::FitPeak()
     double minX = _hist->GetBinCenter(lowBin) - _hist->GetXaxis()->GetBinWidth(lowBin);
     double maxX = _hist->GetBinCenter(highBin);
     FitInRange(peakMean, minX, maxX);
-
 }
 
 void GaussianFitter::ResetParameterLimits()

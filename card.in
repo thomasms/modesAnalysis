@@ -2,6 +2,7 @@ channel				-1
 files				1
 
 showBackground			1
+shiftToPsdSignalPeak		1
 
 signalName			PuBe
 backgroundName			co60
@@ -10,6 +11,7 @@ savePlots			0
 signalFile 			../../data/fastNeutron_tests/PuBe-det23_04.root
 #signalFile			../../data/fastNeutron_tests/60co-det23_07.root
 #signalFile			../../data/fastNeutron_tests/137cs-det23_01.root
+#backgroundFile			../../data/fastNeutron_tests/PuBe-det23_04.root
 backgroundFile			../../data/fastNeutron_tests/60co-det23_07.root
 #backgroundFile  		../../data/fastNeutron_tests/137cs-det23_01.root
 
@@ -31,4 +33,4 @@ tubes				-1
 psdCut				0.66
 contaminationUpperLevel		10.0
 contaminationLowerLevel		0.3
-binning				4
+binning				2

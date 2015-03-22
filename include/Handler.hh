@@ -42,7 +42,7 @@ public:
     Handler(TString signalName,TString backgroundName,int binning,double temp,double pres);
     ~Handler();
   
-    void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5);
+    void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5, bool shift=false);
     void SetupSource();
       
     EventParameters GetParameters(int event);
@@ -51,10 +51,10 @@ public:
     std::shared_ptr<Source> GetSourcePtr() {return _source;};
 private:
     void InitialiseHistograms(bool signal);
-    void ProcessData(TTree* treePtr, bool signal, float timeCutOffInMins, float shift=0);
-    void FillHistograms(int channel, bool signal, float Qlong, float Qshort, float shift);
+    void ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeCutOffInMins, float shiftQLong=0,float shiftQShort=0);
+    void FillHistograms(int channel, bool signal, bool psdOnly, float Qlong, float Qshort, float shiftQLong,float shiftQShort);
     void ResetHistograms(bool signal);
-    const std::vector<double> ShiftToCommonPeak(bool signal);
+    const std::vector<float> ShiftToMeanHistPeak(std::vector<TH1F*>* histVector);
     
 private:
   
