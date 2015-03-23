@@ -154,10 +154,12 @@ void Handler::Process(const std::vector<TTree*>& treePtr, bool signal, float tim
         auto shiftsQLong = ShiftToMeanHistPeak(histVectorQLong);
         auto shiftsQShort = ShiftToMeanHistPeak(histVectorQShort);
         
+        //reset psd histogram
+        for(int i=0;i<histVectorPsd->size();i++) histVectorPsd->at(i)->Reset("ICES");
+        
         for(int i=0;i<treePtr.size();++i)
         {
             if(!treePtr.at(i))continue;
-            histVectorPsd->at(i)->Reset("ICES");
             //redo psd only
             ProcessData(treePtr.at(i),signal, true, timeCutOffInSecs, shiftsQLong[i], shiftsQShort[i]);
         }

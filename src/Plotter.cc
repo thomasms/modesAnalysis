@@ -68,7 +68,7 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
     NormaliseHistogram(hist_signal);
     NormaliseHistogram(hist_background);
     
-    SetupHistogram(hist_signal,1);
+    SetupHistogram(hist_signal,_channel,1);
     PolishHistogram(hist_signal,"Q_{long}","Normalised count");
     cvs_channel_spectra->cd();
     cvs_channel_spectra->cd()->SetTickx();
@@ -88,7 +88,7 @@ void Plotter::DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBack
 
     if(showBackground)
     {
-        SetupHistogram(hist_background,2);
+        SetupHistogram(hist_background,_channel,2);
         cvs_channel_spectra->cd()->SetTickx();
         cvs_channel_spectra->cd()->SetTicky();
         hist_background.DrawCopy("SAMES");
@@ -123,7 +123,7 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
         NormaliseHistogram(hist_signal);
         NormaliseHistogram(hist_background);
         
-        SetupHistogram(hist_signal,1);
+        SetupHistogram(hist_signal,ch,1);
         PolishHistogram(hist_signal,"Q_{long}","Normalised count");
         cvs_channel_spectra->cd(ch+1);
         cvs_channel_spectra->cd(ch+1)->SetTickx();
@@ -155,7 +155,7 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
 
         if(showBackground)
         {
-            SetupHistogram(hist_background,2);
+            SetupHistogram(hist_background,ch,2);
             cvs_channel_spectra->cd(ch+1)->SetTickx();
             cvs_channel_spectra->cd(ch+1)->SetTicky();
             if(hist_background.GetEntries() >0)hist_background.DrawCopy("SAMES");
@@ -211,7 +211,7 @@ void Plotter::DrawQShort(const std::shared_ptr<Source> sourcePtr, bool showBackg
     NormaliseHistogram(hist_signal);
     NormaliseHistogram(hist_background);
     
-    SetupHistogram(hist_signal,1);
+    SetupHistogram(hist_signal,_channel,1);
     PolishHistogram(hist_signal,"Q_{short}","Normalised count");
     cvs_channel_qshort->cd();
     cvs_channel_qshort->cd()->SetTickx();
@@ -229,7 +229,7 @@ void Plotter::DrawQShort(const std::shared_ptr<Source> sourcePtr, bool showBackg
     
     if(showBackground)
     {
-        SetupHistogram(hist_background,2);
+        SetupHistogram(hist_background,_channel,2);
         hist_background.DrawCopy("SAMES");
         
         histname = sourcePtr->GetBackgroundName() + QSHORTEXT + std::to_string(_channel);
@@ -259,7 +259,7 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
         NormaliseHistogram(hist_signal);
         NormaliseHistogram(hist_background);
         
-        SetupHistogram(hist_signal,1);
+        SetupHistogram(hist_signal,ch,1);
         PolishHistogram(hist_signal,"Q_{long}","Normalised count");
         cvs_channel_qshort->cd(ch+1);
         cvs_channel_qshort->cd(ch+1)->SetTickx();
@@ -288,7 +288,7 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
         
         if(showBackground)
         {
-            SetupHistogram(hist_background,2);
+            SetupHistogram(hist_background,ch,2);
             cvs_channel_qshort->cd(ch+1)->SetTickx();
             cvs_channel_qshort->cd(ch+1)->SetTicky();
             if(hist_background.GetEntries() >0)hist_background.DrawCopy("SAMES");
@@ -346,7 +346,7 @@ void Plotter::DrawPsd(const std::shared_ptr<Source> sourcePtr,bool showBackgroun
     NormaliseHistogram(hist_signal);
     NormaliseHistogram(hist_background);
     
-    SetupHistogram(hist_signal,1);
+    SetupHistogram(hist_signal,_channel,1);
     PolishHistogram(hist_signal,"(Q_{long} - Q_{short})/Q_{long}","Normalised count");
     // Change y axis to show both peaks
     if( showBackground )
@@ -361,7 +361,7 @@ void Plotter::DrawPsd(const std::shared_ptr<Source> sourcePtr,bool showBackgroun
 
     if(showBackground)
     {
-        SetupHistogram(hist_background,2);
+        SetupHistogram(hist_background,_channel,2);
         hist_background.DrawCopy("SAMES");
         histname = sourcePtr->GetBackgroundName() + PSDEXT + std::to_string(_channel);
         if(_savePlots)
@@ -388,6 +388,8 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
         TH1F hist_background = sourcePtr->GetBackgroundPsdHistVtr().at(ch);
       
         cvs_channel_psd->cd(ch+1);
+        cvs_channel_psd->cd(ch+1)->SetTickx();
+        cvs_channel_psd->cd(ch+1)->SetTicky();
         
         //Normalise
         NormaliseHistogram(hist_signal);
@@ -399,19 +401,29 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
         fit->SetLineColor(FITCOLOR);
         fit->SetLineWidth(2);
         
-        SetupHistogram(hist_signal,1);
+        SetupHistogram(hist_signal,ch,1);
         PolishHistogram(hist_signal,"(Q_{long} - Q_{short})/Q_{long}","Normalised count");
         hist_signal.GetYaxis()->SetTitleOffset(1.4);
+        hist_signal.GetXaxis()->SetRangeUser(0,1);
+        
         if(hist_signal.GetEntries()>0)
         {
             // Change y axis to show both peaks
             if( showBackground )
                 ChangeRangeToFitBoth(hist_signal, hist_background);
             
-            hist_signal.GetXaxis()->SetRangeUser(0,1);
+            // Move stat box position
+            hist_signal.Draw("HIST");
+            cvs_channel_psd->cd(ch+1)->Update();    // forces drawing of stat box
+            TPaveStats *statsSig = (TPaveStats*)hist_signal.GetListOfFunctions()->FindObject("stats");
+            statsSig->SetX1NDC(0.1);
+            statsSig->SetX2NDC(0.45);
+            statsSig->SetY1NDC(0.9);
+            statsSig->SetY2NDC(0.75);
+            
+            // Final draw
             hist_signal.DrawCopy("HIST");
             fit->DrawCopy("SAMES");
-            fitter.PrintDetails();
         }
                 
         TString histname = sourcePtr->GetSignalName() + PSDEXT + std::to_string(ch);
@@ -420,22 +432,30 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
 
         if(showBackground)
         {
-            SetupHistogram(hist_background,2);
+            SetupHistogram(hist_background,ch,2);
             cvs_channel_psd->cd(ch+1)->SetTickx();
             cvs_channel_psd->cd(ch+1)->SetTicky();
             
             if(hist_background.GetEntries()>0)
             {
-                
-                hist_background.DrawCopy("SAMES");
-                
                 // Peak fitter
                 fitter.SetHistogram(&hist_background);
                 fit = fitter.Fit();
                 fit->SetLineColor(FITCOLOR);
                 fit->SetLineWidth(2);
+                
+                // Move stat box position
+                hist_background.Draw("SAMES");
+                cvs_channel_psd->cd(ch+1)->Update();    // forces drawing of stat box
+                TPaveStats *statsBkg = (TPaveStats*)hist_background.GetListOfFunctions()->FindObject("stats");
+                statsBkg->SetX1NDC(0.1);
+                statsBkg->SetX2NDC(0.45);
+                statsBkg->SetY1NDC(0.75);
+                statsBkg->SetY2NDC(0.6);
+                
+                // Final draw
+                hist_background.DrawCopy("SAMES");
                 fit->DrawCopy("SAMES");
-                //fitter.PrintDetails();
             }            
  
             histname = sourcePtr->GetBackgroundName() + PSDEXT + std::to_string(ch);
@@ -667,11 +687,14 @@ const int Plotter::FindCanvas(const TString& name)
     return result;
 }
 
-void Plotter::SetupHistogram(TH1F& hist,int option)
+void Plotter::SetupHistogram(TH1F& hist, int channel, int option)
 {
-
-  hist.SetLineStyle(1);
-  hist.SetOption("HIST");
+    hist.SetLineStyle(1);
+    hist.SetOption("HIST");
+    
+    TString title = "Channel ";
+    title += channel;
+    hist.SetTitle(title);
 
   //signal is 1 - black
   if(option <= 1)
@@ -727,21 +750,24 @@ void Plotter::PolishHistogram(TH1F& hist,const TString xtitle,const TString ytit
 {
   hist.GetXaxis()->SetTitle(xtitle);
   hist.GetXaxis()->SetTitleOffset(1.1);
-  hist.GetXaxis()->SetLabelSize(0.04);
-  hist.GetXaxis()->SetTitleSize(0.042);
+  hist.GetXaxis()->SetLabelSize(0.035);
+  hist.GetXaxis()->SetTitleSize(0.035);
 
   std::stringstream ss;
   ss << hist.GetBinWidth(0);
   TString yTitleFull = ytitle + " / " + ss.str();
   hist.GetYaxis()->SetTitle(yTitleFull);
   hist.GetYaxis()->SetTitleOffset(1.0);
-  hist.GetYaxis()->SetLabelSize(0.04);
-  hist.GetYaxis()->SetTitleSize(0.042);
+  hist.GetYaxis()->SetLabelSize(0.035);
+  hist.GetYaxis()->SetTitleSize(0.035);
     
     //style
     gStyle->SetOptFit(0002);
     gStyle->SetOptStat("e");
-    TPaveStats *stats = (TPaveStats*)hist.FindObject("stats");
+    
+    TGaxis * xAXis = (TGaxis*)hist.GetYaxis();
+    xAXis->SetMaxDigits(2);
+    //TPaveStats *stats = (TPaveStats*)hist.FindObject("stats");
 }
 
 void Plotter::PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int channel)
