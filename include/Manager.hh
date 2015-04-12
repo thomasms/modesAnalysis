@@ -91,7 +91,7 @@ protected:
     //input parameters
     TString _signalFile,_backgroundFile,_signalName,_backgroundName,_saveDir;
     double _timeCutOff,_psdCut,_contaminationUpperLevel,_contaminationLowerLevel;
-    bool _savePlots,_logPlot,_showBackground, _shiftToPsdSignalPeak;
+    bool _savePlots,_logPlot,_showBackground, _shiftToPsdSignalPeak, _sameNrOfEventsPerTube;
     int _files,_experiments,_meanNoEvents,_tubes,_binning, _channel;
     double _temperature,_pressure,_activity,_distance;
 };

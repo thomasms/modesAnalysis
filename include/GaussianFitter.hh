@@ -1,6 +1,8 @@
 #ifndef GAUSSIAN_FITTER_HH
 #define GAUSSIAN_FITTER_HH
 
+#include <memory>
+
 #include "TH1.h"
 #include "TMath.h"
 #include "TF1.h"
@@ -20,11 +22,9 @@ public:
     GaussianFitter(TH1F* hist);
     ~GaussianFitter();
     
-    TF1* Fit();
+    std::shared_ptr<TF1> Fit();
     void FitInRange(double mean, double minX, double maxX);
-    
-    TF1* GetFitFunction();
-    
+        
     const double GetChiSquare() const;
     const double GetChiSquarePerNDF() const;
     const double GetMean() const;
@@ -43,7 +43,7 @@ private:
     void ResetParameterLimits();
     
 private:
-    TF1* _fit;
+    std::shared_ptr<TF1> _fit;
     TH1F* _hist;
     
     int _minNDF;

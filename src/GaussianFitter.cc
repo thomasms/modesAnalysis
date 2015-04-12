@@ -4,15 +4,14 @@
 GaussianFitter::GaussianFitter(TH1F* hist) : _minNDF(20)
 {
     _hist = hist;
-    _fit = new TF1("Fit", "gaus");
+    _fit = std::make_shared<TF1>("Fit", "gaus");
 }
 
 GaussianFitter::~GaussianFitter()
 {
-    delete _fit;
 }
 
-TF1* GaussianFitter::Fit()
+std::shared_ptr<TF1> GaussianFitter::Fit()
 {
     FitPeak();
     return _fit;
@@ -23,11 +22,6 @@ void GaussianFitter::FitInRange(double mean, double minX, double maxX)
     SetMean(mean);
     _fit->SetRange(minX,maxX);
     _hist->Fit("Fit","QOIR");
-}
-
-TF1* GaussianFitter::GetFitFunction()
-{
-    return _fit;
 }
 
 const double GaussianFitter::GetChiSquare() const
@@ -90,7 +84,7 @@ void GaussianFitter::PrintDetails()
 void GaussianFitter::FitPeak()
 {
     TSpectrum peakFinder(200);
-    int nPeaksFound = peakFinder.Search(_hist,1,"SAMES");
+    int nPeaksFound = peakFinder.Search(_hist,1,"goff");
     
     double* xPeaks = peakFinder.GetPositionX();
     double highestPeak = 0;
@@ -109,7 +103,7 @@ void GaussianFitter::FitPeak()
     }
     
     // 70% within the peak value
-    const double threshold = highestPeak*0.7;
+    const double threshold = highestPeak*0.70;
     
     // Get the bin where value falls below threshold
     int lowBin  = 0;
@@ -117,7 +111,7 @@ void GaussianFitter::FitPeak()
     bool lowBinSet = false;
     bool highBinSet = false;
     double prevBinContent = 0;
-    for(int bin=0;bin<_hist->GetNbinsX();++bin)
+    for(int bin=1;bin<_hist->GetNbinsX();++bin)
     {
         double binContent = _hist->GetBinContent(bin);
         double nextBinContent = _hist->GetBinContent(bin+1);

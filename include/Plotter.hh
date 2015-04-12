@@ -60,6 +60,7 @@ public:
 private:
     
     const int FindCanvas(const TString& name);
+    std::shared_ptr<TF1> FitHistogram(TH1F* hist);
     void SetupHistogram(TH1F& hist, int channel, int option);
     void ChangeRangeToFitBoth(TH1F& hist_signal, TH1F& hist_background);
     void SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel);

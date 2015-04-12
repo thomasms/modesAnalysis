@@ -1,10 +1,10 @@
 #include "Handler.hh"
 
-Handler::Handler()
+Handler::Handler() : _sameNrOfEventsPerTube(false)
 {
 }
 
-Handler::Handler(TString signalName,TString backgroundName,int binning,double temp,double press) : _binningFactor(binning)
+Handler::Handler(TString signalName,TString backgroundName,int binning,double temp,double press) : _binningFactor(binning), _sameNrOfEventsPerTube(false)
 {
     _source = std::make_shared<Source>(signalName, backgroundName);
     _source->SetTemperature(temp);
@@ -188,14 +188,32 @@ void Handler::ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeC
         br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
         nEvents[channel] = br_channel_data->GetEntries();
         
-        if(channel%2 == 1)
+        if(!_sameNrOfEventsPerTube)
+        {
+            br_channel_data->SetAddress(&_data);
+            
+            //loop over entries on each channel
+            for (int e=0; e<nEvents[channel]; ++e)
+            {
+                br_channel_data->GetEntry(e);
+                
+                float Qlong = _data.qlong;
+                float Qshort = _data.qshort;
+                
+                FillHistograms(channel,signal, psdOnly, Qlong,Qshort, shiftQLong, shiftQShort);
+                
+            }//end loop over events
+        }
+        else if(channel%2 == 1)
         {
             if(nEvents[channel] > nEvents[channel-1])
                 nEvents[channel] = nEvents[channel-1];
             else
                 nEvents[channel-1] = nEvents[channel];
         }
-    }
+    } //end loop over channels
+    
+    if(!_sameNrOfEventsPerTube)return;
     
     std::vector< std::vector<int> > badEvents;
     //channel data - loop over again to get bad event indicies
@@ -223,7 +241,7 @@ void Handler::ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeC
                 //only count events before time set, -1 indicates all times
                 //ignore negative times
                 // other cuts
-                if((timeInSecs>timeCutOffInSecs && timeCutOffInSecs != -1) || (timeInSecs <0) || (Qlong <= 0) || (Qshort <= 0) || (psd <= 0))
+                if( (timeInSecs>timeCutOffInSecs || (timeInSecs <0) || (Qlong <= 0) || (Qshort <= 0) || (psd <= 0)) && (timeCutOffInSecs != -1) )
                     badChannelEvents.push_back(1);
                 else
                     badChannelEvents.push_back(0);
@@ -276,7 +294,7 @@ const std::vector<float> Handler::ShiftToMeanHistPeak(std::vector<TH1F*>* histVe
     double shift = 0;
     double meanOfMeans = 0;
     
-    TF1* fit;
+    std::shared_ptr<TF1> fit;
     std::vector<float> shifts;
     std::vector<double> means;
     

@@ -4,7 +4,6 @@
 #include <vector>
 #include <iostream>
 #include <memory>
-#include <vector>
 
 #include "TInterpreter.h"
 #include "TFrame.h"
@@ -44,6 +43,7 @@ public:
   
     void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5, bool shift=false);
     void SetupSource();
+    void RequireSameNrOfEventsPerTube(bool option)      {_sameNrOfEventsPerTube = option;};
       
     EventParameters GetParameters(int event);
     EventData GetData(int event);
@@ -62,6 +62,9 @@ private:
     EventData                _data;
     std::shared_ptr<Source>  _source;
   
+    //flags
+    bool _sameNrOfEventsPerTube;
+    
     //histograms
     int _binningFactor;
     TH1F* _h1_channelSpectra;

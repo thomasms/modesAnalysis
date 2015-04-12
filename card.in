@@ -2,7 +2,8 @@ channel				-1
 files				1
 
 showBackground			1
-shiftToPsdSignalPeak		1
+shiftToPsdSignalPeak		0
+sameNrOfEventsPerTube		0
 
 signalName			PuBe
 backgroundName			co60
@@ -24,7 +25,7 @@ backgroundFile			../../data/fastNeutron_tests/60co-det23_07.root
 saveDir				/Users/tom/PhysicsWork/PhD/Modes/analysis
 logPlot				0
 
-#in seconds
+#in seconds: -1 is no time cuts
 timeCutOff			300
 
 numberOfExperiments		10000
@@ -33,4 +34,4 @@ tubes				-1
 psdCut				0.66
 contaminationUpperLevel		10.0
 contaminationLowerLevel		0.3
-binning				2
+binning				5
