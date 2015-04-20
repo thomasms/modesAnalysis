@@ -40,7 +40,7 @@
 class Plotter
 {
 public:
-    Plotter(int channel,bool savePlots);
+    Plotter(int channel,bool savePlots, bool showPeaks);
     ~Plotter();
     
     void DrawSpectra(const std::shared_ptr<Source> sourcePtr, bool showBackground=false);
@@ -86,7 +86,8 @@ private:
 private:
 
     int _channel;
-    bool _savePlots;
+    bool _savePlots, _showPeaks;
+    double _statBoxHeight;
     
     //Legend
     TLegend* legend_;

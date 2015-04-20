@@ -1,9 +1,10 @@
 channel				-1
 files				1
 
+showPeaks			1
 showBackground			1
-shiftToPsdSignalPeak		0
-sameNrOfEventsPerTube		0
+shiftToPsdSignalPeak		1
+sameNrOfEventsPerTube		1
 
 signalName			PuBe
 backgroundName			co60

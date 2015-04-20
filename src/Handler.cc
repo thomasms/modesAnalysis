@@ -72,7 +72,7 @@ void Handler::InitialiseHistograms(bool signal)
                                        histname_qshort,
                                        1000/_binningFactor,
                                        0,
-                                       10000);
+                                       2000);
         
         _h1_channelPsd      = new TH1F(histname_psd,
                                        histname_psd,
@@ -151,17 +151,22 @@ void Handler::Process(const std::vector<TTree*>& treePtr, bool signal, float tim
     
     if(shift)
     {
-        auto shiftsQLong = ShiftToMeanHistPeak(histVectorQLong);
-        auto shiftsQShort = ShiftToMeanHistPeak(histVectorQShort);
+        // What are the best values???
+        double valueToShift = (signal) ? 0.769 : 0.504;
+        
+        auto shifts = ShiftToMeanHistPeak(histVectorQLong, histVectorQShort, valueToShift);
         
         //reset psd histogram
-        for(int i=0;i<histVectorPsd->size();i++) histVectorPsd->at(i)->Reset("ICES");
+        for(int i=0;i<histVectorPsd->size();i++)
+        {
+            histVectorPsd->at(i)->Reset("ICES");
+        }
         
         for(int i=0;i<treePtr.size();++i)
         {
             if(!treePtr.at(i))continue;
             //redo psd only
-            ProcessData(treePtr.at(i),signal, true, timeCutOffInSecs, shiftsQLong[i], shiftsQShort[i]);
+            ProcessData(treePtr.at(i),signal, true, timeCutOffInSecs, shifts[i], shifts[i]);
         }
     }
 }
@@ -288,35 +293,34 @@ void Handler::ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeC
     } //end loop over channels
 }
 
-const std::vector<float> Handler::ShiftToMeanHistPeak(std::vector<TH1F*>* histVector)
+const std::vector<float> Handler::ShiftToMeanHistPeak(std::vector<TH1F*>* histQlongVector,
+                                                      std::vector<TH1F*>* histQshortVector, const double shiftToValue)
 {
-    double mean = 0;
-    double shift = 0;
-    double meanOfMeans = 0;
-    
-    std::shared_ptr<TF1> fit;
     std::vector<float> shifts;
-    std::vector<double> means;
+    
+    if(histQlongVector->size() != histQshortVector->size())
+        return shifts;
+    
+    double qLongMean = 0;
+    double qShortMean = 0;
+    double shift = 0;
     
     // get the mean of the mean of channels
-    for(int i=0;i<histVector->size();++i)
+    for(int i=0;i<histQlongVector->size();++i)
     {
         //Peak fitter
-        GaussianFitter fitter(histVector->at(i));
+        GaussianFitter fitter(histQlongVector->at(i));
+        auto fit = fitter.Fit();
+        qLongMean = fitter.GetMean();
+        
+        fitter.SetHistogram(histQshortVector->at(i));
         fit = fitter.Fit();
-        mean = fitter.GetMean();
-        meanOfMeans += mean;
-        means.push_back(mean);
-    }
-    
-    meanOfMeans = meanOfMeans/static_cast<double>(means.size());
-    
-    // get the shift from the mean of means
-    for(int i=0;i<histVector->size();++i)
-    {
-        shift = meanOfMeans - means[i];
+        qShortMean = fitter.GetMean();
+        
+        shift = -((shiftToValue - 1.0)*qLongMean + qShortMean)/shiftToValue;
         shifts.push_back(shift);
-        Utils::ScaleXaxis(histVector->at(i),1,shift);
+        
+        std::cout << "\nQlong: " << qLongMean << ", Qshort: " << qShortMean << ", Shift: " << shift;
     }
     
     return shifts;

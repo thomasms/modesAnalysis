@@ -13,7 +13,7 @@ public:
     static void ScaleXaxis(TH1 *h, double scale, double shift);
     static void ScaleYaxis(TH1 *h, double scale, double shift);
     static void ScaleZaxis(TH1 *h, double scale, double shift);
-
+    
 private:
     
     static void ScaleAxis(TAxis *a, double scale, double shift);

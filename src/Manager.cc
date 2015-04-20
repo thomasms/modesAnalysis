@@ -26,6 +26,7 @@ void Manager::InitDataCards()
   _cards->AddDataCardDouble("contaminationUpperLevel", 0.20);
   _cards->AddDataCardDouble("contaminationLowerLevel", 0.10);
   _cards->AddDataCardBool("showBackground", false);
+  _cards->AddDataCardBool("showPeaks", false);
   _cards->AddDataCardBool("savePlots", false);
   _cards->AddDataCardBool("logPlot", false);
   _cards->AddDataCardBool("shiftToPsdSignalPeak", false);
@@ -53,6 +54,7 @@ void Manager::LoadDataCards()
   _contaminationUpperLevel 	= _cards->fetchValueDouble("contaminationUpperLevel");
   _contaminationLowerLevel 	= _cards->fetchValueDouble("contaminationLowerLevel");
   _showBackground           = _cards->fetchValueBool("showBackground");
+  _showPeaks                = _cards->fetchValueBool("showPeaks");
   _savePlots                = _cards->fetchValueBool("savePlots");
   _logPlot                  = _cards->fetchValueBool("logPlot");
   _shiftToPsdSignalPeak     = _cards->fetchValueBool("shiftToPsdSignalPeak");
@@ -108,7 +110,7 @@ void Manager::Process()
 
 void Manager::Plot()
 {
-    Plotter plotter(_channel,_savePlots);
+    Plotter plotter(_channel, _savePlots, _showPeaks);
     plotter.DrawSpectra(_handler->GetSourcePtr(),_showBackground);
     plotter.DrawQShort(_handler->GetSourcePtr(),_showBackground);
     plotter.DrawPsd(_handler->GetSourcePtr(),_showBackground);

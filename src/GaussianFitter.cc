@@ -78,6 +78,7 @@ void GaussianFitter::PrintDetails()
     std::cout << "\n----- Fit details -----"
               << "\nMean:          " <<GetMean()
               << "\nSigma:         " <<GetSigma()
+              << "\nError:         " <<GetSigma()/(TMath::Sqrt(static_cast<double>(_hist->GetEntries())))
               << "\nChiSquare/NDF: " <<GetChiSquarePerNDF() << std::endl;
 }
 

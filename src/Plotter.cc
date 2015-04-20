@@ -7,9 +7,10 @@ const static TString PSDEXT = "_psd_ch";
 const static TString FOMEXT = "_fom_ch";
 const static Color_t FITCOLOR = kBlue;
 
-Plotter::Plotter(int channel, bool savePlots) : 
+Plotter::Plotter(int channel, bool savePlots, bool showPeaks) :
 		_channel(channel),
-		_savePlots(savePlots)
+		_savePlots(savePlots),
+        _showPeaks(showPeaks)
 {
     this->ResetCanvases();
     
@@ -17,6 +18,8 @@ Plotter::Plotter(int channel, bool savePlots) :
     g1_eff_s_b = nullptr;
     g1_pur_s_b = nullptr;
     g1_effXpur_s_b = nullptr;
+    
+    _statBoxHeight = (showPeaks) ? 0.15 : 0.05;
 }
 
 Plotter::~Plotter()
@@ -129,8 +132,14 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
         NormaliseHistogram(hist_background);
         
         // Peak fitters
-        auto fit_signal = FitHistogram(&hist_signal);
-        auto fit_background = FitHistogram(&hist_background);
+        std::shared_ptr<TF1> fit_signal;
+        std::shared_ptr<TF1> fit_background;
+        
+        if(_showPeaks)
+        {
+            fit_signal = FitHistogram(&hist_signal);
+            fit_background = FitHistogram(&hist_background);
+        }
         
         SetupHistogram(hist_signal,ch,1);
         PolishHistogram(hist_signal,"Q_{long}","Normalised count");
@@ -147,11 +156,11 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
             statsSig->SetX1NDC(0.55);
             statsSig->SetX2NDC(0.9);
             statsSig->SetY1NDC(0.9);
-            statsSig->SetY2NDC(0.75);
+            statsSig->SetY2NDC(0.9 - _statBoxHeight);
             
             // Final draw
             hist_signal.DrawCopy("HIST");
-            fit_signal->DrawCopy("SAMES");
+            if(_showPeaks)fit_signal->DrawCopy("SAMES");
         }
                 
         TString histname = sourcePtr->GetSignalName() + SPECTRAEXT + std::to_string(ch);
@@ -172,12 +181,12 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
                 TPaveStats *statsBkg = (TPaveStats*)hist_background.GetListOfFunctions()->FindObject("stats");
                 statsBkg->SetX1NDC(0.55);
                 statsBkg->SetX2NDC(0.9);
-                statsBkg->SetY1NDC(0.75);
-                statsBkg->SetY2NDC(0.6);
+                statsBkg->SetY1NDC(0.9 - _statBoxHeight);
+                statsBkg->SetY2NDC(0.9 - 2*_statBoxHeight);
                 
                 // Final draw
                 hist_background.DrawCopy("SAMES");
-                fit_background->DrawCopy("SAMES");
+                if(_showPeaks)fit_background->DrawCopy("SAMES");
             }
  
             histname = sourcePtr->GetBackgroundName() + SPECTRAEXT + std::to_string(ch);
@@ -281,8 +290,14 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
         NormaliseHistogram(hist_background);
         
         // Peak fitters
-        auto fit_signal = FitHistogram(&hist_signal);
-        auto fit_background = FitHistogram(&hist_background);
+        std::shared_ptr<TF1> fit_signal;
+        std::shared_ptr<TF1> fit_background;
+        
+        if(_showPeaks)
+        {
+            fit_signal = FitHistogram(&hist_signal);
+            fit_background = FitHistogram(&hist_background);
+        }
         
         SetupHistogram(hist_signal,ch,1);
         PolishHistogram(hist_signal,"Q_{short}","Normalised count");
@@ -301,11 +316,11 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
             statsSig->SetX1NDC(0.55);
             statsSig->SetX2NDC(0.9);
             statsSig->SetY1NDC(0.9);
-            statsSig->SetY2NDC(0.75);
+            statsSig->SetY2NDC(0.9 - _statBoxHeight);
             
             // Final draw
             hist_signal.DrawCopy("HIST");
-            fit_signal->DrawCopy("SAMES");
+            if(_showPeaks)fit_signal->DrawCopy("SAMES");
         }
         
         TString histname = sourcePtr->GetSignalName() + QSHORTEXT + std::to_string(ch);
@@ -327,12 +342,12 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
                 TPaveStats *statsBkg = (TPaveStats*)hist_background.GetListOfFunctions()->FindObject("stats");
                 statsBkg->SetX1NDC(0.55);
                 statsBkg->SetX2NDC(0.9);
-                statsBkg->SetY1NDC(0.75);
-                statsBkg->SetY2NDC(0.6);
+                statsBkg->SetY1NDC(0.9 - _statBoxHeight);
+                statsBkg->SetY2NDC(0.9 - 2*_statBoxHeight);
                 
                 // Final draw
                 hist_background.DrawCopy("SAMES");
-                fit_background->DrawCopy("SAMES");
+                if(_showPeaks)fit_background->DrawCopy("SAMES");
             }
             
             histname = sourcePtr->GetBackgroundName() + QSHORTEXT + std::to_string(ch);
@@ -431,8 +446,14 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
         NormaliseHistogram(hist_background);
         
         // Peak fitters
-        auto fit_signal = FitHistogram(&hist_signal);
-        auto fit_background = FitHistogram(&hist_background);
+        std::shared_ptr<TF1> fit_signal;
+        std::shared_ptr<TF1> fit_background;
+        
+        if(_showPeaks)
+        {
+            fit_signal = FitHistogram(&hist_signal);
+            fit_background = FitHistogram(&hist_background);
+        }
         
         SetupHistogram(hist_signal,ch,1);
         PolishHistogram(hist_signal,"(Q_{long} - Q_{short})/Q_{long}","Normalised count");
@@ -452,11 +473,11 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
             statsSig->SetX1NDC(0.1);
             statsSig->SetX2NDC(0.45);
             statsSig->SetY1NDC(0.9);
-            statsSig->SetY2NDC(0.75);
+            statsSig->SetY2NDC(0.9 - _statBoxHeight);
             
             // Final draw
             hist_signal.DrawCopy("HIST");
-            fit_signal->DrawCopy("SAMES");
+            if(_showPeaks)fit_signal->DrawCopy("SAMES");
         }
                 
         TString histname = sourcePtr->GetSignalName() + PSDEXT + std::to_string(ch);
@@ -476,14 +497,17 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
                 hist_background.Draw("SAMES");
                 cvs_channel_psd->cd(ch+1)->Update();    // forces drawing of stat box
                 TPaveStats *statsBkg = (TPaveStats*)hist_background.GetListOfFunctions()->FindObject("stats");
+                if(!_showPeaks)hist_background.GetListOfFunctions()->Remove(statsBkg);
                 statsBkg->SetX1NDC(0.1);
                 statsBkg->SetX2NDC(0.45);
-                statsBkg->SetY1NDC(0.75);
-                statsBkg->SetY2NDC(0.6);
+                statsBkg->SetY1NDC(0.9 - _statBoxHeight);
+                statsBkg->SetY2NDC(0.9 - 2*_statBoxHeight);
+                statsBkg->GetLineWith("Entries")->SetTextColor(kRed);
+                statsBkg->Draw();
                 
                 // Final draw
                 hist_background.DrawCopy("SAMES");
-                fit_background->DrawCopy("SAMES");
+                if(_showPeaks)fit_background->DrawCopy("SAMES");
             }            
  
             histname = sourcePtr->GetBackgroundName() + PSDEXT + std::to_string(ch);
@@ -595,6 +619,7 @@ std::shared_ptr<TF1> Plotter::FitHistogram(TH1F* hist)
     auto fit = fitter.Fit();
     fit->SetLineColor(FITCOLOR);
     fit->SetLineWidth(2);
+    fitter.PrintDetails();
     
     return fit;
 }
@@ -805,7 +830,6 @@ void Plotter::PolishHistogram(TH1F& hist,const TString xtitle,const TString ytit
     
     TGaxis * xAXis = (TGaxis*)hist.GetYaxis();
     xAXis->SetMaxDigits(2);
-    //TPaveStats *stats = (TPaveStats*)hist.FindObject("stats");
 }
 
 void Plotter::PrintSpectraDetails(const std::shared_ptr<Source> sourcePtr, int channel)
