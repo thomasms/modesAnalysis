@@ -40,9 +40,11 @@ SOURCE9 = BasePlot
 SOURCE10 = FOMPlot
 SOURCE11 = GaussianFitter
 SOURCE12 = Utils
+SOURCE13 = ChannelData
+SOURCE14 = TubeData
 
 OBJ = $(SOURCE1).o $(SOURCE2).o $(SOURCE3).o $(SOURCE4).o $(SOURCE5).o $(SOURCE6).o $(SOURCE7).o $(SOURCE8).o $(SOURCE9).o $(SOURCE10).o $(SOURCE11).o
-OBJ += $(SOURCE12).o
+OBJ += $(SOURCE12).o $(SOURCE13).o $(SOURCE14).o
 OBJS = $(addprefix $(ODIR)/,$(OBJ))
 
 #define root system location

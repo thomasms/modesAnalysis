@@ -27,10 +27,13 @@
 #include "TPad.h"
 #include "TRandom3.h"
 
+#include "ChannelData.hh"
+#include "TubeData.hh"
 #include "GaussianFitter.hh"
 #include "Utils.hh"
 #include "dataLib.hh"
 
+const int TUBES = 4;
 const int CHANNELS = 8;
 
 class Handler
@@ -41,7 +44,7 @@ public:
     Handler(TString signalName,TString backgroundName,int binning,double temp,double pres);
     ~Handler();
   
-    void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5, bool shift=false);
+    void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5);
     void SetupSource();
     void RequireSameNrOfEventsPerTube(bool option)      {_sameNrOfEventsPerTube = option;};
       
@@ -51,12 +54,10 @@ public:
     std::shared_ptr<Source> GetSourcePtr() {return _source;};
 private:
     void InitialiseHistograms(bool signal);
-    void ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeCutOffInMins, float shiftQLong=0,float shiftQShort=0);
-    void FillHistograms(int channel, bool signal, bool psdOnly, float Qlong, float Qshort, float shiftQLong,float shiftQShort);
+    void ProcessData(TTree* treePtr, bool signal, float timeCutOffInMins);
+    void FillHistograms(const ChannelData& data, bool signal);
     void ResetHistograms(int channel, bool signal);
-    const std::vector<float> ShiftToMeanHistPeak(std::vector<TH1F*>* histQlongVector,
-                                                 std::vector<TH1F*>* histQshortVector, const double shiftToValue);
-
+    
     TBranch* GetChannelDataBranch(TTree* treePtr, int channel) { return treePtr->GetBranch(Form("acq_ch%i",channel));};
     
 private:

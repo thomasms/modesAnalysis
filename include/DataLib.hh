@@ -38,22 +38,6 @@ public:
   
 };
 
-class BinaryResult
-{
-public:
-    BinaryResult(double result, double lowError, double highError) : result_(result), lowError_(lowError), highError_(highError){};
-    ~BinaryResult(){};
-    
-    const double GetResult()        const  {return result_;};
-    const double GetHighError()     const  {return highError_;};
-    const double GetLowError()      const  {return lowError_;};
-    
-private:
-    double result_;
-    double lowError_;
-    double highError_;
-};
-
 class Source
 {
 

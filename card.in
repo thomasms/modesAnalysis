@@ -3,7 +3,6 @@ files				1
 
 showPeaks			1
 showBackground			1
-shiftToPsdSignalPeak		0
 sameNrOfEventsPerTube		1
 
 signalName			PuBe
