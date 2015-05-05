@@ -39,7 +39,7 @@ public:
         for(int i=0;i<values.size();++i)
             squareSum += values[i]*values[i];
         
-        rms = squareSum/static_cast<T>(values.size());
+        rms = TMath::Sqrt(squareSum/static_cast<T>(values.size()));
         
         return rms;
     }

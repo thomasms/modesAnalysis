@@ -1,9 +1,8 @@
 channel				-1
 files				1
 
-showPeaks			1
+showPeaks			0
 showBackground			1
-sameNrOfEventsPerTube		1
 
 signalName			PuBe
 backgroundName			co60
@@ -28,11 +27,13 @@ saveDir				/Users/tom/PhysicsWork/PhD/Modes/analysis
 logPlot				0
 
 #in seconds: -1 is no time cuts
-timeCutOff			300
+timeCutOff			3
 
-meanEvents			2
+takeRMS				0
+numberOfExperiments		80
+meanEvents			100
 tubes				-1
 psdCut				0.66
 contaminationUpperLevel		10.0
 contaminationLowerLevel		0.3
-binning				5
+binning				10

@@ -17,7 +17,7 @@ TubeData::~TubeData()
     
 }
 
-void TubeData::ProcessData(int meanNrOfEvents)
+void TubeData::ProcessData(int meanNrOfEvents, int experiments, bool takeRMS)
 {
     // Reset the processed data
     _channel_processedData.first = _channel_rawData.first;
@@ -27,12 +27,11 @@ void TubeData::ProcessData(int meanNrOfEvents)
     SetEntries();
     RemoveBadEvents();
     
-    // Take the mean of sample events
-    _nrOfExperiments = RunExperiments(meanNrOfEvents);
-    std::cout << "\nExperiments: " << _nrOfExperiments;
+    // Take the mean/RMS of sample events
+    RunExperiments(meanNrOfEvents, experiments, takeRMS);
 }
 
-const int TubeData::RunExperiments(int meanNrOfEvents)
+void TubeData::RunExperiments(int meanNrOfEvents, int experiments, bool takeRMS)
 {
     // Keep running track of position in event array and number of events left
     int remainingEvents = _nEntries;
@@ -42,58 +41,85 @@ const int TubeData::RunExperiments(int meanNrOfEvents)
     // Generate number of events from poisson distribution
     int eventsInTube = GetPoissonNumberOfEvents(meanNrOfEvents);
     
-    // store all mean data values
-    std::vector<float> psdMeans0;
-    std::vector<float> psdMeans1;
-    std::vector<float> QLongMeans0;
-    std::vector<float> QLongMeans1;
-    std::vector<float> QShortMeans0;
-    std::vector<float> QShortMeans1;
-    std::vector<float> TimeMeans0;
-    std::vector<float> TimeMeans1;
+    // store all mean/RMS data values
+    std::vector<float> psd0;
+    std::vector<float> psd1;
+    std::vector<float> QLong0;
+    std::vector<float> QLong1;
+    std::vector<float> QShort0;
+    std::vector<float> QShort1;
+    std::vector<float> Time0;
+    std::vector<float> Time1;
     
     while (remainingEvents >= eventsInTube)
     {
-        std::pair<float,float> psd = GetPsdMeanOfSampleEvents(eventsInTube, index);
-        psdMeans0.push_back(psd.first);
-        psdMeans1.push_back(psd.second);
+        if((nrOfExperiments == experiments) && (experiments != -1))
+            break;
         
-        std::pair<float,float> qlong = GetQLongMeanOfSampleEvents(eventsInTube, index);
-        QLongMeans0.push_back(psd.first);
-        QLongMeans1.push_back(psd.second);
+        std::pair<float,float> psd = (takeRMS) ? GetPsdRMSOfSampleEvents(eventsInTube, index) :
+                                                 GetPsdMeanOfSampleEvents(eventsInTube, index);
+        psd0.push_back(psd.first);
+        psd1.push_back(psd.second);
         
-        std::pair<float,float> qshort = GetQShortMeanOfSampleEvents(eventsInTube, index);
-        QShortMeans0.push_back(psd.first);
-        QShortMeans1.push_back(psd.second);
+        std::pair<float,float> qlong = (takeRMS) ? GetQLongRMSOfSampleEvents(eventsInTube, index) :
+                                                   GetQLongMeanOfSampleEvents(eventsInTube, index);
+        QLong0.push_back(qlong.first);
+        QLong1.push_back(qlong.second);
         
-        std::pair<float,float> time = GetTimeTagMeanOfSampleEvents(eventsInTube, index);
-        TimeMeans0.push_back(psd.first);
-        TimeMeans1.push_back(psd.second);
+        std::pair<float,float> qshort = (takeRMS) ? GetQShortRMSOfSampleEvents(eventsInTube, index) :
+                                                    GetQShortMeanOfSampleEvents(eventsInTube, index);
+        QShort0.push_back(qshort.first);
+        QShort1.push_back(qshort.second);
+        
+        std::pair<float,float> time = (takeRMS) ? GetTimeTagRMSOfSampleEvents(eventsInTube, index) :
+                                                  GetTimeTagMeanOfSampleEvents(eventsInTube, index);
+        Time0.push_back(time.first);
+        Time1.push_back(time.second);
         
         // running totals
         index +=eventsInTube;
         remainingEvents -=eventsInTube;
-        nrOfExperiments++;
+        if(eventsInTube>0)nrOfExperiments++;
         
         // Generate new number of events
         eventsInTube = GetPoissonNumberOfEvents(meanNrOfEvents);
     }
     
-    _channel_processedData.first.SetEntries(QLongMeans0.size());
-    _channel_processedData.first.SetPSDValues(psdMeans0);
-    _channel_processedData.first.SetQlongValues(QLongMeans0);
-    _channel_processedData.first.SetQshortValues(QShortMeans0);
-    _channel_processedData.first.SetTimeTagValues(TimeMeans0);
+    _channel_processedData.first.SetEntries(QLong0.size());
+    _channel_processedData.first.SetPSDValues(psd0);
+    _channel_processedData.first.SetQlongValues(QLong0);
+    _channel_processedData.first.SetQshortValues(QShort0);
+    _channel_processedData.first.SetTimeTagValues(Time0);
     
-    _channel_processedData.second.SetEntries(QLongMeans1.size());
-    _channel_processedData.second.SetPSDValues(psdMeans1);
-    _channel_processedData.second.SetQlongValues(QLongMeans1);
-    _channel_processedData.second.SetQshortValues(QShortMeans1);
-    _channel_processedData.second.SetTimeTagValues(TimeMeans1);
+    _channel_processedData.second.SetEntries(QLong1.size());
+    _channel_processedData.second.SetPSDValues(psd1);
+    _channel_processedData.second.SetQlongValues(QLong1);
+    _channel_processedData.second.SetQshortValues(QShort1);
+    _channel_processedData.second.SetTimeTagValues(Time1);
     
     _nEntries = _channel_processedData.first.GetEntries();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+const std::pair<float,float> TubeData::GetQLongRMSOfSampleEvents(int nrOfEvents, int startIndex)
+{
+    std::pair<float,float> results(0,0);
     
-    return nrOfExperiments;
+    // Take number of events from start index
+    std::vector<float> sampleQlong0(nrOfEvents,0.0);
+    std::vector<float> sampleQlong1(nrOfEvents,0.0);
+    for(int i=0;i<nrOfEvents;++i)
+    {
+        sampleQlong0[i] =_channel_processedData.first.GetQlong(startIndex +i);
+        sampleQlong1[i] =_channel_processedData.second.GetQlong(startIndex +i);
+        
+    }
+    
+    results.first  = Utils::GetRMS<float>(sampleQlong0);
+    results.second = Utils::GetRMS<float>(sampleQlong1);
+    
+    return results;
 }
 
 const std::pair<float,float> TubeData::GetQLongMeanOfSampleEvents(int nrOfEvents, int startIndex)
@@ -107,10 +133,30 @@ const std::pair<float,float> TubeData::GetQLongMeanOfSampleEvents(int nrOfEvents
     {
         sampleQlong0[i] =_channel_processedData.first.GetQlong(startIndex +i);
         sampleQlong1[i] =_channel_processedData.second.GetQlong(startIndex +i);
+        
     }
     
     results.first  = Utils::GetMean<float>(sampleQlong0);
     results.second = Utils::GetMean<float>(sampleQlong1);
+    
+    return results;
+}
+
+const std::pair<float,float> TubeData::GetQShortRMSOfSampleEvents(int nrOfEvents, int startIndex)
+{
+    std::pair<float,float> results(0,0);
+    
+    // Take number of events from start index
+    std::vector<float> sampleQshort0(nrOfEvents,0.0);
+    std::vector<float> sampleQshort1(nrOfEvents,0.0);
+    for(int i=0;i<nrOfEvents;++i)
+    {
+        sampleQshort0[i] =_channel_processedData.first.GetQshort(startIndex +i);
+        sampleQshort1[i] =_channel_processedData.second.GetQshort(startIndex +i);
+    }
+    
+    results.first  = Utils::GetRMS<float>(sampleQshort0);
+    results.second = Utils::GetRMS<float>(sampleQshort1);
     
     return results;
 }
@@ -130,6 +176,25 @@ const std::pair<float,float> TubeData::GetQShortMeanOfSampleEvents(int nrOfEvent
     
     results.first  = Utils::GetMean<float>(sampleQshort0);
     results.second = Utils::GetMean<float>(sampleQshort1);
+    
+    return results;
+}
+
+const std::pair<float,float> TubeData::GetTimeTagRMSOfSampleEvents(int nrOfEvents, int startIndex)
+{
+    std::pair<float,float> results(0,0);
+    
+    // Take number of events from start index
+    std::vector<float> sampleTime0(nrOfEvents,0.0);
+    std::vector<float> sampleTime1(nrOfEvents,0.0);
+    for(int i=0;i<nrOfEvents;++i)
+    {
+        sampleTime0[i] =_channel_processedData.first.GetTimeTag(startIndex +i);
+        sampleTime1[i] =_channel_processedData.second.GetTimeTag(startIndex +i);
+    }
+    
+    results.first  = Utils::GetRMS<float>(sampleTime0);
+    results.second = Utils::GetRMS<float>(sampleTime1);
     
     return results;
 }

@@ -492,9 +492,8 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
             
             if(hist_background.GetEntries()>0)
             {
-                
                 // Move stat box position
-                hist_background.Draw("SAMES");
+                hist_background.Draw("HIST SAMES");
                 cvs_channel_psd->cd(ch+1)->Update();    // forces drawing of stat box
                 TPaveStats *statsBkg = (TPaveStats*)hist_background.GetListOfFunctions()->FindObject("stats");
                 if(!_showPeaks)hist_background.GetListOfFunctions()->Remove(statsBkg);
@@ -506,7 +505,7 @@ void Plotter::DrawPsdAll(const std::shared_ptr<Source> sourcePtr,bool showBackgr
                 statsBkg->Draw();
                 
                 // Final draw
-                hist_background.DrawCopy("SAMES");
+                hist_background.DrawCopy("HIST SAME");
                 if(_showPeaks)fit_background->DrawCopy("SAMES");
             }            
  

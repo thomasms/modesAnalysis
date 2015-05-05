@@ -47,6 +47,8 @@ public:
     void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5);
     void SetupSource();
     void SetMeanNumberOfEvents(int nrOfEvents)      {_meanNrOfEvents = nrOfEvents;};
+    void SetNumberOfExperiments(int experiments)    {_experiments = experiments;};
+    void SetUseRMS(bool useRMS)                     {_takeRMS = useRMS;};
       
     EventParameters GetParameters(int event);
     EventData GetData(int event);
@@ -68,6 +70,8 @@ private:
   
     //options for data handler
     int _meanNrOfEvents;
+    int _experiments;
+    bool _takeRMS;
     
     //histograms
     int _binningFactor;

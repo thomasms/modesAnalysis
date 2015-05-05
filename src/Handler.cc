@@ -4,7 +4,7 @@ Handler::Handler() : _meanNrOfEvents(-1)
 {
 }
 
-Handler::Handler(TString signalName,TString backgroundName,int binning,double temp,double press) : _binningFactor(binning),_meanNrOfEvents(-1)
+Handler::Handler(TString signalName,TString backgroundName,int binning,double temp,double press) : _binningFactor(binning),_meanNrOfEvents(-1), _experiments(-1), _takeRMS(false)
 {
     _source = std::make_shared<Source>(signalName, backgroundName);
     _source->SetTemperature(temp);
@@ -182,7 +182,7 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
     //loop over tubes to fill histograms with processed channel data
     for(int tube = 0;tube<TUBES;tube++)
     {
-        tubeData[tube].ProcessData(_meanNrOfEvents);
+        tubeData[tube].ProcessData(_meanNrOfEvents, _experiments, _takeRMS);
         
         FillHistograms(tubeData[tube].GetChannelProcessedDataFirst(),signal);
         FillHistograms(tubeData[tube].GetChannelProcessedDataSecond(),signal);

@@ -29,7 +29,7 @@ void Manager::InitDataCards()
   _cards->AddDataCardBool("showPeaks", false);
   _cards->AddDataCardBool("savePlots", false);
   _cards->AddDataCardBool("logPlot", false);
-  _cards->AddDataCardBool("sameNrOfEventsPerTube", false);
+  _cards->AddDataCardBool("takeRMS", false);
   _cards->AddDataCardInt("numberOfExperiments", 100);
   _cards->AddDataCardInt("meanEvents", 500);
   _cards->AddDataCardInt("tubes", 4);
@@ -56,7 +56,7 @@ void Manager::LoadDataCards()
   _showPeaks                = _cards->fetchValueBool("showPeaks");
   _savePlots                = _cards->fetchValueBool("savePlots");
   _logPlot                  = _cards->fetchValueBool("logPlot");
-  _sameNrOfEventsPerTube    = _cards->fetchValueBool("sameNrOfEventsPerTube");
+  _takeRMS                  = _cards->fetchValueBool("takeRMS");
   _experiments              = _cards->fetchValueInt("numberOfExperiments");
   _meanNoEvents             = _cards->fetchValueInt("meanEvents");
   _tubes                    = _cards->fetchValueInt("tubes");
@@ -100,9 +100,16 @@ void Manager::Initialise()
 
 void Manager::Process()
 {
+    //Set options
     _handler->SetMeanNumberOfEvents(_meanNoEvents);
+    _handler->SetNumberOfExperiments(_experiments);
+    _handler->SetUseRMS(_takeRMS);
+    
+    //Process data
     _handler->Process(_signalTreeVtr,true,_timeCutOff);
     _handler->Process(_backgrTreeVtr,false,_timeCutOff);
+    
+    //Copy to source
     _handler->SetupSource();
 }
 
