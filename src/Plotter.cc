@@ -619,7 +619,7 @@ std::shared_ptr<TF1> Plotter::FitHistogram(TH1F* hist)
     auto fit = fitter.Fit();
     fit->SetLineColor(FITCOLOR);
     fit->SetLineWidth(2);
-    fitter.PrintDetails();
+    //fitter.PrintDetails();
     
     return fit;
 }
@@ -784,7 +784,7 @@ void Plotter::NormaliseHistogram(TH1F& hist)
 {  
     double factor = static_cast<double>(hist.GetEntries());
     hist.Scale(1.0/factor);
-    //SetErrorBars(hist,factor);
+    SetErrorBars(hist,factor);
 }
 
 void Plotter::SetErrorBars(TH1F& hist, const double scale)

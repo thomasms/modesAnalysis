@@ -42,16 +42,28 @@ const double GaussianFitter::GetMean() const
     return value;
 }
 
+const double GaussianFitter::GetMeanError() const
+{
+    const double value = _fit->GetParError(1);
+    return value;
+}
+
 const double GaussianFitter::GetSigma() const
 {
     const double value = _fit->GetParameter(2);
     return value;
 }
 
+const double GaussianFitter::GetSigmaError() const
+{
+    const double value = _fit->GetParError(2);
+    return value;
+}
+
 void GaussianFitter::SetMean(const double mean)
 {
     _fit->SetParameter(1, mean);
-    _fit->FixParameter(1, mean);
+    //_fit->FixParameter(1, mean);
     //must set sigma limits otherwise yields wierd results
     _fit->SetParLimits(2, _hist->GetXaxis()->GetXmin(), _hist->GetXaxis()->GetXmax());
 }
@@ -76,8 +88,8 @@ void GaussianFitter::SetMinNDFInFit(const int ndf)
 void GaussianFitter::PrintDetails()
 {
     std::cout << "\n----- Fit details -----"
-              << "\nMean:          " <<GetMean()
-              << "\nSigma:         " <<GetSigma()
+              << "\nMean:          " <<GetMean() << " +- " << GetMeanError()
+              << "\nSigma:         " <<GetSigma()<< " +- " << GetSigmaError()
               << "\nError:         " <<GetSigma()/(TMath::Sqrt(static_cast<double>(_hist->GetEntries())))
               << "\nChiSquare/NDF: " <<GetChiSquarePerNDF() << std::endl;
 }

@@ -53,9 +53,11 @@ private:
     void InitialiseHistograms(bool signal);
     void ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeCutOffInMins, float shiftQLong=0,float shiftQShort=0);
     void FillHistograms(int channel, bool signal, bool psdOnly, float Qlong, float Qshort, float shiftQLong,float shiftQShort);
-    void ResetHistograms(bool signal);
+    void ResetHistograms(int channel, bool signal);
     const std::vector<float> ShiftToMeanHistPeak(std::vector<TH1F*>* histQlongVector,
                                                  std::vector<TH1F*>* histQshortVector, const double shiftToValue);
+
+    TBranch* GetChannelDataBranch(TTree* treePtr, int channel) { return treePtr->GetBranch(Form("acq_ch%i",channel));};
     
 private:
   

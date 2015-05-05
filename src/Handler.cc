@@ -111,6 +111,7 @@ void Handler::InitialiseHistograms(bool signal)
 
 void Handler::FillHistograms(int channel,bool signal, bool psdOnly, float Qlong,float Qshort, float shiftQLong, float shiftQShort)
 {
+    
     float diff = ( Qlong  + shiftQLong - Qshort - shiftQShort) / (Qlong + shiftQLong);
     //std::cout << "\nQLong: " << Qlong << ",QShort: " << Qshort <<", Diff: "<< diff;
     
@@ -190,7 +191,7 @@ void Handler::ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeC
     //channel data - get number of events of each channel first
     for(int channel = 0;channel<CHANNELS;channel++)
     {
-        br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
+        br_channel_data = GetChannelDataBranch(treePtr, channel);
         nEvents[channel] = br_channel_data->GetEntries();
         
         if(!_sameNrOfEventsPerTube)
@@ -225,7 +226,7 @@ void Handler::ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeC
     for(int channel = 0;channel<CHANNELS;channel++)
     {
         std::vector<int> badChannelEvents;
-        br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
+        br_channel_data = GetChannelDataBranch(treePtr, channel);
         
         //Is the branch valid?
         if (br_channel_data!=nullptr && br_channel_data->GetEntries()!=0)
@@ -263,7 +264,7 @@ void Handler::ProcessData(TTree* treePtr, bool signal, bool psdOnly, float timeC
     //loop over finally to only count good events and fill histograms
     for(int channel = 0;channel<CHANNELS;channel++)
     {
-        br_channel_data = treePtr->GetBranch(Form("acq_ch%i",channel));
+        br_channel_data = GetChannelDataBranch(treePtr, channel);
         
         //Is the branch valid?
         if (br_channel_data!=nullptr && br_channel_data->GetEntries()!=0)
@@ -351,22 +352,24 @@ void Handler::SetupSource()
     }
 }
 
-void Handler::ResetHistograms(bool signal)
+void Handler::ResetHistograms(int channel, bool signal)
 {
+    if(channel <0 || channel >CHANNELS)return;
+    
     Option_t* option = "ICES";
     
     if(signal)
     {
-        for(int i=0;i<_h1Vtr_channelsSpectraSig.size();i++) _h1Vtr_channelsSpectraSig[i]->Reset(option);
-        for(int i=0;i<_h1Vtr_channelsQShortSig.size();i++) _h1Vtr_channelsQShortSig[i]->Reset(option);
-        for(int i=0;i<_h2Vtr_channelsSpectraSig.size();i++) _h2Vtr_channelsSpectraSig[i]->Reset(option);
-        for(int i=0;i<_h1Vtr_channelsPsdSig.size();i++) _h1Vtr_channelsPsdSig[i]->Reset(option);
+        _h1Vtr_channelsSpectraSig[channel]->Reset(option);
+        _h1Vtr_channelsQShortSig[channel]->Reset(option);
+        _h2Vtr_channelsSpectraSig[channel]->Reset(option);
+        _h1Vtr_channelsPsdSig[channel]->Reset(option);
     }
     else
     {
-        for(int i=0;i<_h1Vtr_channelsSpectraBkg.size();i++) _h1Vtr_channelsSpectraBkg[i]->Reset(option);
-        for(int i=0;i<_h1Vtr_channelsQShortBkg.size();i++) _h1Vtr_channelsQShortBkg[i]->Reset(option);
-        for(int i=0;i<_h1Vtr_channelsPsdBkg.size();i++) _h1Vtr_channelsPsdBkg[i]->Reset(option);
+        _h1Vtr_channelsSpectraBkg[channel]->Reset(option);
+        _h1Vtr_channelsQShortBkg[channel]->Reset(option);
+        _h1Vtr_channelsPsdBkg[channel]->Reset(option);
     }
 }
 

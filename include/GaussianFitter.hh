@@ -28,7 +28,9 @@ public:
     const double GetChiSquare() const;
     const double GetChiSquarePerNDF() const;
     const double GetMean() const;
+    const double GetMeanError() const;
     const double GetSigma() const;
+    const double GetSigmaError() const;
     
     void SetHistogram(TH1F* hist);
     void SetMean(const double mean);
