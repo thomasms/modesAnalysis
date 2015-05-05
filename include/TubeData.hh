@@ -6,7 +6,10 @@
 #include <iomanip>
 #include <utility>
 
+#include "TRandom3.h"
+
 #include "ChannelData.hh"
+#include "Utils.hh"
 
 class TubeData
 {
@@ -15,21 +18,39 @@ public:
     TubeData(const ChannelData& channel0, const ChannelData& channel1, int id);
     ~TubeData();
     
-    void ProcessData();
+    void ProcessData(int meanNrOfEvents);
     
     inline const int GetId()  const  {return _tubeId;};
     inline const int GetEntries()  const  {return _nEntries;};
     
-    const ChannelData GetChannelDataFirst() {return _channel0;};
-    const ChannelData GetChannelDataSecond() {return _channel1;};
+    const ChannelData GetChannelRawDataFirst() {return _channel_rawData.first;};
+    const ChannelData GetChannelRawDataSecond() {return _channel_rawData.second;};
     
+    const ChannelData GetChannelProcessedDataFirst() {return _channel_processedData.first;};
+    const ChannelData GetChannelProcessedDataSecond() {return _channel_processedData.second;};
+
+private:
+    
+    void SetEntries();
+    void RemoveBadEvents();
+    const int RunExperiments(int meanNrOfEvents);
+    const int GetPoissonNumberOfEvents(int meanNrOfEvents);
+    const std::pair<float,float> GetQLongMeanOfSampleEvents(int nrOfEvents, int startIndex);
+    const std::pair<float,float> GetQShortMeanOfSampleEvents(int nrOfEvents, int startIndex);
+    const std::pair<float,float> GetTimeTagMeanOfSampleEvents(int nrOfEvents, int startIndex);
+    const std::pair<float,float> GetPsdMeanOfSampleEvents(int nrOfEvents, int startIndex);
+    const std::pair<float,float> GetPsdRMSOfSampleEvents(int nrOfEvents, int startIndex);
+
 private:
     
     int _tubeId;
     int _nEntries;
+    int _nrOfExperiments;
     
-    ChannelData _channel0;
-    ChannelData _channel1;
+    TRandom3 _rand;
+    
+    std::pair<ChannelData,ChannelData> _channel_rawData;
+    std::pair<ChannelData,ChannelData> _channel_processedData;
     
 };
 

@@ -100,7 +100,7 @@ void Manager::Initialise()
 
 void Manager::Process()
 {
-    _handler->RequireSameNrOfEventsPerTube(_sameNrOfEventsPerTube);
+    _handler->SetMeanNumberOfEvents(_meanNoEvents);
     _handler->Process(_signalTreeVtr,true,_timeCutOff);
     _handler->Process(_backgrTreeVtr,false,_timeCutOff);
     _handler->SetupSource();

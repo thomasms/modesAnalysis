@@ -1,10 +1,10 @@
 #include "Handler.hh"
 
-Handler::Handler() : _sameNrOfEventsPerTube(false)
+Handler::Handler() : _meanNrOfEvents(-1)
 {
 }
 
-Handler::Handler(TString signalName,TString backgroundName,int binning,double temp,double press) : _binningFactor(binning), _sameNrOfEventsPerTube(false)
+Handler::Handler(TString signalName,TString backgroundName,int binning,double temp,double press) : _binningFactor(binning),_meanNrOfEvents(-1)
 {
     _source = std::make_shared<Source>(signalName, backgroundName);
     _source->SetTemperature(temp);
@@ -119,16 +119,16 @@ void Handler::FillHistograms(const ChannelData& data, bool signal)
         
         if(signal)
         {
-            _h1Vtr_channelsPsdSig.at(data.GetId())->Fill(psd);
-            _h1Vtr_channelsSpectraSig.at(data.GetId())->Fill(Qlong);
-            _h1Vtr_channelsQShortSig.at(data.GetId())->Fill(Qshort);
-            _h2Vtr_channelsSpectraSig.at(data.GetId())->Fill(Qlong,psd);
+            if(psd>0)_h1Vtr_channelsPsdSig.at(data.GetId())->Fill(psd);
+            if(Qlong>0)_h1Vtr_channelsSpectraSig.at(data.GetId())->Fill(Qlong);
+            if(Qshort>0)_h1Vtr_channelsQShortSig.at(data.GetId())->Fill(Qshort);
+            if(Qlong>0)_h2Vtr_channelsSpectraSig.at(data.GetId())->Fill(Qlong,psd);
         }
         else
         {
-            _h1Vtr_channelsPsdBkg.at(data.GetId())->Fill(psd);
-            _h1Vtr_channelsSpectraBkg.at(data.GetId())->Fill(Qlong);
-            _h1Vtr_channelsQShortBkg.at(data.GetId())->Fill(Qshort);
+            if(psd>0)_h1Vtr_channelsPsdBkg.at(data.GetId())->Fill(psd);
+            if(Qlong>0)_h1Vtr_channelsSpectraBkg.at(data.GetId())->Fill(Qlong);
+            if(Qshort>0)_h1Vtr_channelsQShortBkg.at(data.GetId())->Fill(Qshort);
         }
     }
 }
@@ -179,13 +179,13 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
         }
     }
     
-    //loop over tubes to match number of events per channel
+    //loop over tubes to fill histograms with processed channel data
     for(int tube = 0;tube<TUBES;tube++)
     {
-        tubeData[tube].ProcessData();
+        tubeData[tube].ProcessData(_meanNrOfEvents);
         
-        FillHistograms(tubeData[tube].GetChannelDataFirst(),signal);
-        FillHistograms(tubeData[tube].GetChannelDataSecond(),signal);
+        FillHistograms(tubeData[tube].GetChannelProcessedDataFirst(),signal);
+        FillHistograms(tubeData[tube].GetChannelProcessedDataSecond(),signal);
         
     } //end loop over channels
 }

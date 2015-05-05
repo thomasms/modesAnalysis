@@ -24,7 +24,7 @@ public:
     inline const int GetId()  const  {return _channelId;};
     inline const int GetEntries()  const  {return _nEntries;};
     
-    inline void SetId(int id);
+    inline void SetId(int id) { _channelId = id;};
     
     const bool IsBadEvent(int index) const;
     const float GetPsd(int index) const;
@@ -33,6 +33,7 @@ public:
     const float GetTimeTag(int index) const;
     
     void SetEntries(int entries);
+    void SetPSDValues(const std::vector<float>& values) {_psdValues = values;};
     void SetQlongValues(const std::vector<float>& values) {_qlongValues = values;};
     void SetQshortValues(const std::vector<float>& values) {_qshortValues = values;};
     void SetTimeTagValues(const std::vector<float>& values) {_timetagValues = values;};
@@ -45,6 +46,7 @@ private:
     int _channelId;
     int _nEntries;
     
+    std::vector<float> _psdValues;
     std::vector<float> _qlongValues;
     std::vector<float> _qshortValues;
     std::vector<float> _timetagValues;

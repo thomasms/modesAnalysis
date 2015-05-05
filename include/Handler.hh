@@ -46,7 +46,7 @@ public:
   
     void Process(const std::vector<TTree*>& treePtr, bool signal, float timeCutOffInMins=5);
     void SetupSource();
-    void RequireSameNrOfEventsPerTube(bool option)      {_sameNrOfEventsPerTube = option;};
+    void SetMeanNumberOfEvents(int nrOfEvents)      {_meanNrOfEvents = nrOfEvents;};
       
     EventParameters GetParameters(int event);
     EventData GetData(int event);
@@ -66,8 +66,8 @@ private:
     EventData                _data;
     std::shared_ptr<Source>  _source;
   
-    //flags
-    bool _sameNrOfEventsPerTube;
+    //options for data handler
+    int _meanNrOfEvents;
     
     //histograms
     int _binningFactor;

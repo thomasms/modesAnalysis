@@ -45,6 +45,7 @@ void ChannelData::ReadData(TBranch* branch_data, float timeCutOffInSecs)
         psd = (Qlong - Qshort)/Qlong;
         
         // set them in vectors
+        _psdValues.push_back(psd);
         _qlongValues.push_back(Qlong);
         _qshortValues.push_back(Qshort);
         _timetagValues.push_back(timeInSecs);
@@ -61,23 +62,20 @@ void ChannelData::ReadData(TBranch* branch_data, float timeCutOffInSecs)
 void ChannelData::ClearAllData()
 {
     _nEntries = 0;
+    _psdValues.resize(_nEntries);
     _qlongValues.resize(_nEntries);
     _qshortValues.resize(_nEntries);
     _timetagValues.resize(_nEntries);
     _badEventFlags.resize(_nEntries);
 }
 
-void ChannelData::SetId(int id)
-{
-    _channelId = id;
-}
-
 void ChannelData::SetEntries(int entries)
 {
-    if(entries > _nEntries)
+    if(entries >= _nEntries)
         return;
     
     _nEntries = entries;
+    _psdValues.resize(entries);
     _qlongValues.resize(entries);
     _qshortValues.resize(entries);
     _timetagValues.resize(entries);
@@ -97,10 +95,10 @@ const bool ChannelData::IsBadEvent(int index) const
 const float ChannelData::GetPsd(int index) const
 {
     float result = 0;
-    if(index <0 || index >= _qlongValues.size())
+    if(index <0 || index >= _psdValues.size())
         return result;
     
-    result = (_qlongValues[index] - _qshortValues[index]) / _qlongValues[index];
+    result = _psdValues[index];
     return result;
 }
 

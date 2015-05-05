@@ -30,8 +30,7 @@ logPlot				0
 #in seconds: -1 is no time cuts
 timeCutOff			300
 
-numberOfExperiments		10000
-meanEvents			200
+meanEvents			2
 tubes				-1
 psdCut				0.66
 contaminationUpperLevel		10.0
