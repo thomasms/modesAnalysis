@@ -176,7 +176,7 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
             if(hist_background.GetEntries()>0)
             {
                 // Move stat box position
-                hist_background.Draw("SAMES");
+                hist_background.Draw("HIST SAMES");
                 cvs_channel_spectra->cd(ch+1)->Update();    // forces drawing of stat box
                 TPaveStats *statsBkg = (TPaveStats*)hist_background.GetListOfFunctions()->FindObject("stats");
                 statsBkg->SetX1NDC(0.55);
@@ -185,7 +185,7 @@ void Plotter::DrawSpectraAll(const std::shared_ptr<Source> sourcePtr,bool showBa
                 statsBkg->SetY2NDC(0.9 - 2*_statBoxHeight);
                 
                 // Final draw
-                hist_background.DrawCopy("SAMES");
+                hist_background.DrawCopy("HIST SAMES");
                 if(_showPeaks)fit_background->DrawCopy("SAMES");
             }
  
@@ -255,7 +255,7 @@ void Plotter::DrawQShort(const std::shared_ptr<Source> sourcePtr, bool showBackg
     if(showBackground)
     {
         SetupHistogram(hist_background,_channel,2);
-        hist_background.DrawCopy("SAMES");
+        hist_background.DrawCopy("HIST SAMES");
         
         histname = sourcePtr->GetBackgroundName() + QSHORTEXT + std::to_string(_channel);
         if(_savePlots)
@@ -337,7 +337,7 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
             {
                 
                 // Move stat box position
-                hist_background.Draw("SAMES");
+                hist_background.Draw("HIST SAMES");
                 cvs_channel_qshort->cd(ch+1)->Update();    // forces drawing of stat box
                 TPaveStats *statsBkg = (TPaveStats*)hist_background.GetListOfFunctions()->FindObject("stats");
                 statsBkg->SetX1NDC(0.55);
@@ -346,7 +346,7 @@ void Plotter::DrawQShortAll(const std::shared_ptr<Source> sourcePtr,bool showBac
                 statsBkg->SetY2NDC(0.9 - 2*_statBoxHeight);
                 
                 // Final draw
-                hist_background.DrawCopy("SAMES");
+                hist_background.DrawCopy("HIST SAMES");
                 if(_showPeaks)fit_background->DrawCopy("SAMES");
             }
             
@@ -412,7 +412,7 @@ void Plotter::DrawPsd(const std::shared_ptr<Source> sourcePtr,bool showBackgroun
     if(showBackground)
     {
         SetupHistogram(hist_background,_channel,2);
-        hist_background.DrawCopy("SAMES");
+        hist_background.DrawCopy("HIST SAMES");
         histname = sourcePtr->GetBackgroundName() + PSDEXT + std::to_string(_channel);
         if(_savePlots)
             WriteToFile<TH1F>(hist_background,histname,PLOTSFILENAME);
@@ -640,7 +640,7 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     double minXBin      = hist_signal.GetXaxis()->GetXmin();
     double maxXBin      = hist_signal.GetXaxis()->GetXmax();
     
-    //Efficiency
+    //Efficiency - signal
     EfficiencyPlot eff(hist_signal);
     eff.Init();
     eff.CalculateUsingBinomial();
@@ -648,6 +648,11 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     if(!g1_eff_s_b)delete g1_eff_s_b;
     g1_eff_s_b      = eff.GetGraphCopy();
     g1_eff_s_b->SetTitle("EFF");
+    
+    //Efficiency - background
+    EfficiencyPlot eff_back(hist_background);
+    eff_back.Init();
+    eff_back.CalculateUsingBinomial();
     
     // Purity
     PurityPlot pur(hist_signal,hist_background);
@@ -665,10 +670,34 @@ void Plotter::SetupGraphs(const std::shared_ptr<Source> sourcePtr, int channel)
     if(!g1_fom_s_b)delete g1_fom_s_b;
     g1_fom_s_b      = fom.GetGraphCopy();
     g1_fom_s_b->SetTitle("FOM");
+
+    
+    const double signalEntries = sourcePtr->GetSignalSpectraHistVtr().at(channel).GetEntries();
+    const double signalEntriesError = TMath::Sqrt(signalEntries);
+    
+    const double backgroundEntries = sourcePtr->GetBackgroundSpectraHistVtr().at(channel).GetEntries();
+    const double backgroundEntriesError = TMath::Sqrt(backgroundEntries);
+    
+    const double signalEfficiency = eff.GetValue(fom.GetBestCut());
+    const double signalEfficiencyError = eff.GetValueError(fom.GetBestCut());
+    
+    const double backgroundEfficiency = eff_back.GetValue(fom.GetBestCut());
+    const double backgroundEfficiencyError = eff_back.GetValueError(fom.GetBestCut());
+    
+    const double signalEntriesThatPass = signalEntries*signalEfficiency;
+    const double signalEntriesThatPassError =signalEntriesThatPass*(signalEfficiencyError/signalEfficiency);
+    
+    const double backgroundEntriesThatPass = backgroundEntries*backgroundEfficiency;
+    double backgroundEntriesThatPassError = backgroundEntriesThatPass*(backgroundEfficiencyError/backgroundEfficiency);
     
     std::cout   << "\n========= Channel " << channel << " ========="
-                << "\nbest f.o.m value: "     << fom.GetBestValue() << " +- " << fom.GetBestValueError()
-                << "\nfor long-short/long = " << fom.GetBestCut()   << " +- " << fom.GetXwidth() /2.0
+                << std::setw(40) << "\nSignal Entries: " << signalEntries
+                << std::setw(40) << "\nBackground Entries: " << backgroundEntries
+                << std::setw(40) << "\nbest f.o.m value: " << fom.GetBestValue() << " +- " << fom.GetBestValueError()
+                << std::setw(40) << "\nbest eff value: " << signalEfficiency << " +- " <<signalEfficiencyError
+                << std::setw(40) << "\nfor long-short/long = " << fom.GetBestCut()   << " +- " << fom.GetXwidth() /2.0
+                << std::setw(40) << "\nSignal entries that pass cut: " << signalEntriesThatPass << " +- " << signalEntriesThatPassError
+                << std::setw(40) << "\nBackground entries that fail cut: " <<backgroundEntriesThatPass << " +- " << backgroundEntriesThatPassError
                 <<"\n=============================" <<std::endl;
     
     if(!g1_effXpur_s_b)delete g1_effXpur_s_b;

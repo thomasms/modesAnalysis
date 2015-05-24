@@ -162,6 +162,9 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
     std::vector<TubeData> tubeData;
     std::vector<ChannelData> channelData(CHANNELS);
     
+    //number of entries per channel
+    std::vector<double> entries;
+    
     // loop over channels
     TBranch* br_channel_data;
     for(int channel = 0;channel<CHANNELS;channel++)
@@ -175,6 +178,9 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
         if(channel%2 ==1)
         {
             TubeData tbData(channelData[channel-1],channelData[channel],(channel +1)/2);
+            if(signal)
+                tbData.SetChannelBackgroundPsdHists(_h1Vtr_channelsPsdBkg[channel-1], _h1Vtr_channelsPsdBkg[channel]);
+            
             tubeData.push_back(tbData);
         }
     }
@@ -184,10 +190,22 @@ void Handler::ProcessData(TTree* treePtr, bool signal, float timeCutOffInSecs)
     {
         tubeData[tube].ProcessData(_meanNrOfEvents, _experiments, _takeRMS);
         
-        FillHistograms(tubeData[tube].GetChannelProcessedDataFirst(),signal);
-        FillHistograms(tubeData[tube].GetChannelProcessedDataSecond(),signal);
+        auto ch1 = tubeData[tube].GetChannelProcessedDataFirst();
+        auto ch2 = tubeData[tube].GetChannelProcessedDataSecond();
+        
+        entries.push_back(ch1.GetEntries());
+        entries.push_back(ch2.GetEntries());
+        
+        FillHistograms(ch1,signal);
+        FillHistograms(ch2,signal);
         
     } //end loop over channels
+    
+    // Set the source entries
+    if(signal)
+        _source->SetChannelSignalEntries(entries);
+    else
+        _source->SetChannelBeckgroundEntries(entries);
 }
 
 void Handler::SetupSource()

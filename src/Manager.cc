@@ -105,9 +105,9 @@ void Manager::Process()
     _handler->SetNumberOfExperiments(_experiments);
     _handler->SetUseRMS(_takeRMS);
     
-    //Process data
-    _handler->Process(_signalTreeVtr,true,_timeCutOff);
+    //Process data - process background first for contamination
     _handler->Process(_backgrTreeVtr,false,_timeCutOff);
+    _handler->Process(_signalTreeVtr,true,_timeCutOff);
     
     //Copy to source
     _handler->SetupSource();

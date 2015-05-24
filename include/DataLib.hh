@@ -75,9 +75,19 @@ public:
 
   void AddPsdToSignalHistVtr(const TH1F& hist)         {_h1Vtr_signalChannelPsd.push_back(hist);};
   void AddPsdToBackgroundHistVtr(const TH1F& hist)     {_h1Vtr_backgroundChannelPsd.push_back(hist);};
-
+    
+  const double GetChannelSignalEntries(int channel) {return _sigEntries[channel];};
+  void SetChannelSignalEntries(const std::vector<double>& entries) {_sigEntries = entries;};
+    
+  const double GetChannelBackgroundEntries(int channel) {return _bkgEntries[channel];};
+  void SetChannelBeckgroundEntries(const std::vector<double>& entries) {_bkgEntries = entries;};
+    
 private:
   TString signalName, backgroundName;
+    
+  std::vector<double> _sigEntries;
+  std::vector<double> _bkgEntries;
+    
   double activity,aquistionTimeInMins, temperature, pressure;
   double distance;
   double totalCounts,signalCounts,backgroundCounts;

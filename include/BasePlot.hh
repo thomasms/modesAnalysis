@@ -25,6 +25,8 @@ public:
     virtual void Init();
     virtual void InitVectors();
     virtual const double GetBestValue();
+    virtual const double GetValue(double psdCut);
+    virtual const double GetValueError(double psdCut);
     virtual const double GetBestValueError();
     virtual const double GetBestCut();
     

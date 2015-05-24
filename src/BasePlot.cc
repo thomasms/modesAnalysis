@@ -22,6 +22,28 @@ void BasePlot::InitVectors()
     _yValueErrorsHigh.resize(_nBins,0.0);
 }
 
+const double BasePlot::GetValue(double psdCut)
+{
+    double value = 0;
+    for(int i=0;i<_xValues.size() -1;++i)
+    {
+        if( (_xValues[i] <=psdCut) && (_xValues[i+1] >=psdCut)  )
+            value = _yValues[i];
+    }
+    return value;
+}
+
+const double BasePlot::GetValueError(double psdCut)
+{
+    double value = 0;
+    for(int i=0;i<_xValues.size() -1;++i)
+    {
+        if( (_xValues[i] <=psdCut) && (_xValues[i+1] >=psdCut)  )
+            value = (_yValueErrorsLow[i] + _yValueErrorsHigh[i])/2.0;
+    }
+    return value;
+}
+
 const double BasePlot::GetBestValue()
 {
     double highestValue = 0.0;

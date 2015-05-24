@@ -1,6 +1,11 @@
 #include "TubeData.hh"
 
-TubeData::TubeData(const ChannelData& channel0, const ChannelData& channel1, int tubeId) : _tubeId(tubeId)
+TubeData::TubeData(const ChannelData& channel0, const ChannelData& channel1, int tubeId) :
+_tubeId(tubeId),
+_nEntries(-1),
+_nOriginalEntries(-1),
+_bkg_psd_hist1(nullptr),
+_bkg_psd_hist2(nullptr)
 {
     _channel_rawData.first = channel0;
     _channel_rawData.second = channel1;
@@ -262,6 +267,12 @@ const int TubeData::GetPoissonNumberOfEvents(int meanNrOfEvents)
     return result;
 }
 
+void TubeData::SetChannelBackgroundPsdHists(TH1F* psd1, TH1F* psd2)
+{
+    _bkg_psd_hist1 = psd1;
+    _bkg_psd_hist2 = psd2;
+}
+
 void TubeData::SetEntries()
 {
     // Ensure the number of entries per tube are the same
@@ -313,4 +324,5 @@ void TubeData::RemoveBadEvents()
     _channel_processedData.second.SetTimeTagValues(timetag1);
     
     _nEntries = _channel_processedData.first.GetEntries();
+    _nOriginalEntries = _nEntries;
 }

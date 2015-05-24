@@ -20,8 +20,11 @@ public:
     
     void ProcessData(int meanNrOfEvents, int experiments, bool takeRMS=false);
     
+    void SetChannelBackgroundPsdHists(TH1F* psd1, TH1F* psd2);
+    
     inline const int GetId()  const  {return _tubeId;};
     inline const int GetEntries()  const  {return _nEntries;};
+    inline const int GetOriginalEntries()  const  {return _nOriginalEntries;};
     
     const ChannelData GetChannelRawDataFirst() {return _channel_rawData.first;};
     const ChannelData GetChannelRawDataSecond() {return _channel_rawData.second;};
@@ -31,6 +34,7 @@ public:
 
 private:
     
+    void ContaminateTube(int meanNrOfEvents, double level);
     void SetEntries();
     void RemoveBadEvents();
     void RunExperiments(int meanNrOfEvents, int experiments, bool takeRMS);
@@ -48,6 +52,10 @@ private:
     
     int _tubeId;
     int _nEntries;
+    int _nOriginalEntries;
+    
+    TH1F* _bkg_psd_hist1;
+    TH1F* _bkg_psd_hist2;
     
     TRandom3 _rand;
     
