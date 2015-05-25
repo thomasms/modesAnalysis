@@ -22,7 +22,7 @@ TubeData::~TubeData()
     
 }
 
-void TubeData::ProcessData(int meanNrOfEvents, int experiments, bool takeRMS)
+void TubeData::ProcessData(int meanNrOfEvents, int experiments, double contaminationLevel, bool takeRMS)
 {
     // Reset the processed data
     _channel_processedData.first = _channel_rawData.first;
@@ -33,15 +33,11 @@ void TubeData::ProcessData(int meanNrOfEvents, int experiments, bool takeRMS)
     RemoveBadEvents();
     
     // Take the mean/RMS of sample events
-    RunExperiments(meanNrOfEvents, experiments, takeRMS);
+    RunExperiments(meanNrOfEvents, experiments, contaminationLevel, takeRMS);
 }
 
-void TubeData::RunExperiments(int meanNrOfEvents, int experiments, bool takeRMS)
+void TubeData::RunExperiments(int meanNrOfEvents, int experiments, double contaminationLevel, bool takeRMS)
 {
-    // Keep running track of position in event array and number of events left
-    int remainingEvents = _nEntries;
-    int index = 0;
-    int nrOfExperiments = 0;
     
     // Generate number of events from poisson distribution
     int eventsInTube = GetPoissonNumberOfEvents(meanNrOfEvents);
@@ -56,34 +52,35 @@ void TubeData::RunExperiments(int meanNrOfEvents, int experiments, bool takeRMS)
     std::vector<float> Time0;
     std::vector<float> Time1;
     
-    while (remainingEvents >= eventsInTube)
+    int nrOfExperiments = 0;
+    while (nrOfExperiments < experiments)
     {
-        if((nrOfExperiments == experiments) && (experiments != -1))
-            break;
+        auto eventIndices = GetEventIndices(eventsInTube);
         
-        std::pair<float,float> psd = (takeRMS) ? GetPsdRMSOfSampleEvents(eventsInTube, index) :
-                                                 GetPsdMeanOfSampleEvents(eventsInTube, index);
+        // add contamination
+        auto psdValues = GetContaminatedPsdSample(eventIndices, contaminationLevel);
+        
+        std::pair<float,float> psd = (takeRMS) ? GetPsdRMSOfSampleEvents(psdValues) :
+                                                 GetPsdMeanOfSampleEvents(psdValues);
         psd0.push_back(psd.first);
         psd1.push_back(psd.second);
         
-        std::pair<float,float> qlong = (takeRMS) ? GetQLongRMSOfSampleEvents(eventsInTube, index) :
-                                                   GetQLongMeanOfSampleEvents(eventsInTube, index);
+        std::pair<float,float> qlong = (takeRMS) ? GetQLongRMSOfSampleEvents(eventIndices) :
+                                                   GetQLongMeanOfSampleEvents(eventIndices);
         QLong0.push_back(qlong.first);
         QLong1.push_back(qlong.second);
         
-        std::pair<float,float> qshort = (takeRMS) ? GetQShortRMSOfSampleEvents(eventsInTube, index) :
-                                                    GetQShortMeanOfSampleEvents(eventsInTube, index);
+        std::pair<float,float> qshort = (takeRMS) ? GetQShortRMSOfSampleEvents(eventIndices) :
+                                                    GetQShortMeanOfSampleEvents(eventIndices);
         QShort0.push_back(qshort.first);
         QShort1.push_back(qshort.second);
         
-        std::pair<float,float> time = (takeRMS) ? GetTimeTagRMSOfSampleEvents(eventsInTube, index) :
-                                                  GetTimeTagMeanOfSampleEvents(eventsInTube, index);
+        std::pair<float,float> time = (takeRMS) ? GetTimeTagRMSOfSampleEvents(eventIndices) :
+                                                  GetTimeTagMeanOfSampleEvents(eventIndices);
         Time0.push_back(time.first);
         Time1.push_back(time.second);
         
         // running totals
-        index +=eventsInTube;
-        remainingEvents -=eventsInTube;
         if(eventsInTube>0)nrOfExperiments++;
         
         // Generate new number of events
@@ -107,18 +104,18 @@ void TubeData::RunExperiments(int meanNrOfEvents, int experiments, bool takeRMS)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-const std::pair<float,float> TubeData::GetQLongRMSOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetQLongRMSOfSampleEvents(const std::vector<int>& indices)
 {
     std::pair<float,float> results(0,0);
     
     // Take number of events from start index
-    std::vector<float> sampleQlong0(nrOfEvents,0.0);
-    std::vector<float> sampleQlong1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
+    int size = static_cast<int>(indices.size());
+    std::vector<float> sampleQlong0(size,0.0);
+    std::vector<float> sampleQlong1(size,0.0);
+    for(int i=0;i<size;++i)
     {
-        sampleQlong0[i] =_channel_processedData.first.GetQlong(startIndex +i);
-        sampleQlong1[i] =_channel_processedData.second.GetQlong(startIndex +i);
-        
+        sampleQlong0[i] =_channel_processedData.first.GetQlong(indices[i]);
+        sampleQlong1[i] =_channel_processedData.second.GetQlong(indices[i]);
     }
     
     results.first  = Utils::GetRMS<float>(sampleQlong0);
@@ -127,18 +124,18 @@ const std::pair<float,float> TubeData::GetQLongRMSOfSampleEvents(int nrOfEvents,
     return results;
 }
 
-const std::pair<float,float> TubeData::GetQLongMeanOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetQLongMeanOfSampleEvents(const std::vector<int>& indices)
 {
     std::pair<float,float> results(0,0);
     
     // Take number of events from start index
-    std::vector<float> sampleQlong0(nrOfEvents,0.0);
-    std::vector<float> sampleQlong1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
+    int size = static_cast<int>(indices.size());
+    std::vector<float> sampleQlong0(size,0.0);
+    std::vector<float> sampleQlong1(size,0.0);
+    for(int i=0;i<size;++i)
     {
-        sampleQlong0[i] =_channel_processedData.first.GetQlong(startIndex +i);
-        sampleQlong1[i] =_channel_processedData.second.GetQlong(startIndex +i);
-        
+        sampleQlong0[i] =_channel_processedData.first.GetQlong(indices[i]);
+        sampleQlong1[i] =_channel_processedData.second.GetQlong(indices[i]);
     }
     
     results.first  = Utils::GetMean<float>(sampleQlong0);
@@ -147,17 +144,18 @@ const std::pair<float,float> TubeData::GetQLongMeanOfSampleEvents(int nrOfEvents
     return results;
 }
 
-const std::pair<float,float> TubeData::GetQShortRMSOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetQShortRMSOfSampleEvents(const std::vector<int>& indices)
 {
     std::pair<float,float> results(0,0);
     
     // Take number of events from start index
-    std::vector<float> sampleQshort0(nrOfEvents,0.0);
-    std::vector<float> sampleQshort1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
+    int size = static_cast<int>(indices.size());
+    std::vector<float> sampleQshort0(size,0.0);
+    std::vector<float> sampleQshort1(size,0.0);
+    for(int i=0;i<size;++i)
     {
-        sampleQshort0[i] =_channel_processedData.first.GetQshort(startIndex +i);
-        sampleQshort1[i] =_channel_processedData.second.GetQshort(startIndex +i);
+        sampleQshort0[i] =_channel_processedData.first.GetQshort(indices[i]);
+        sampleQshort1[i] =_channel_processedData.second.GetQshort(indices[i]);
     }
     
     results.first  = Utils::GetRMS<float>(sampleQshort0);
@@ -166,17 +164,18 @@ const std::pair<float,float> TubeData::GetQShortRMSOfSampleEvents(int nrOfEvents
     return results;
 }
 
-const std::pair<float,float> TubeData::GetQShortMeanOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetQShortMeanOfSampleEvents(const std::vector<int>& indices)
 {
     std::pair<float,float> results(0,0);
     
     // Take number of events from start index
-    std::vector<float> sampleQshort0(nrOfEvents,0.0);
-    std::vector<float> sampleQshort1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
+    int size = static_cast<int>(indices.size());
+    std::vector<float> sampleQshort0(size,0.0);
+    std::vector<float> sampleQshort1(size,0.0);
+    for(int i=0;i<size;++i)
     {
-        sampleQshort0[i] =_channel_processedData.first.GetQshort(startIndex +i);
-        sampleQshort1[i] =_channel_processedData.second.GetQshort(startIndex +i);
+        sampleQshort0[i] =_channel_processedData.first.GetQshort(indices[i]);
+        sampleQshort1[i] =_channel_processedData.second.GetQshort(indices[i]);
     }
     
     results.first  = Utils::GetMean<float>(sampleQshort0);
@@ -185,17 +184,18 @@ const std::pair<float,float> TubeData::GetQShortMeanOfSampleEvents(int nrOfEvent
     return results;
 }
 
-const std::pair<float,float> TubeData::GetTimeTagRMSOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetTimeTagRMSOfSampleEvents(const std::vector<int>& indices)
 {
     std::pair<float,float> results(0,0);
     
     // Take number of events from start index
-    std::vector<float> sampleTime0(nrOfEvents,0.0);
-    std::vector<float> sampleTime1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
+    int size = static_cast<int>(indices.size());
+    std::vector<float> sampleTime0(size,0.0);
+    std::vector<float> sampleTime1(size,0.0);
+    for(int i=0;i<size;++i)
     {
-        sampleTime0[i] =_channel_processedData.first.GetTimeTag(startIndex +i);
-        sampleTime1[i] =_channel_processedData.second.GetTimeTag(startIndex +i);
+        sampleTime0[i] =_channel_processedData.first.GetTimeTag(indices[i]);
+        sampleTime1[i] =_channel_processedData.second.GetTimeTag(indices[i]);
     }
     
     results.first  = Utils::GetRMS<float>(sampleTime0);
@@ -204,17 +204,18 @@ const std::pair<float,float> TubeData::GetTimeTagRMSOfSampleEvents(int nrOfEvent
     return results;
 }
 
-const std::pair<float,float> TubeData::GetTimeTagMeanOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetTimeTagMeanOfSampleEvents(const std::vector<int>& indices)
 {
     std::pair<float,float> results(0,0);
     
-    // Take number of events from start index
-    std::vector<float> sampleTime0(nrOfEvents,0.0);
-    std::vector<float> sampleTime1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
+    // Take number of events
+    int size = static_cast<int>(indices.size());
+    std::vector<float> sampleTime0(size,0.0);
+    std::vector<float> sampleTime1(size,0.0);
+    for(int i=0;i<size;++i)
     {
-        sampleTime0[i] =_channel_processedData.first.GetTimeTag(startIndex +i);
-        sampleTime1[i] =_channel_processedData.second.GetTimeTag(startIndex +i);
+        sampleTime0[i] =_channel_processedData.first.GetTimeTag(indices[i]);
+        sampleTime1[i] =_channel_processedData.second.GetTimeTag(indices[i]);
     }
     
     results.first  = Utils::GetMean<float>(sampleTime0);
@@ -223,42 +224,81 @@ const std::pair<float,float> TubeData::GetTimeTagMeanOfSampleEvents(int nrOfEven
     return results;
 }
 
-const std::pair<float,float> TubeData::GetPsdMeanOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetPsdMeanOfSampleEvents(const std::pair <std::vector<float>, std::vector<float> >& psdSample)
 {
     std::pair<float,float> results(0,0);
     
-    // Take number of events from start index
-    std::vector<float> samplePsd0(nrOfEvents,0.0);
-    std::vector<float> samplePsd1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
-    {
-        samplePsd0[i] =_channel_processedData.first.GetPsd(startIndex +i);
-        samplePsd1[i] =_channel_processedData.second.GetPsd(startIndex +i);
-    }
-    
-    results.first  = Utils::GetMean<float>(samplePsd0);
-    results.second = Utils::GetMean<float>(samplePsd1);
+    results.first  = Utils::GetMean<float>(psdSample.first);
+    results.second = Utils::GetMean<float>(psdSample.second);
     
     return results;
 }
 
-const std::pair<float,float> TubeData::GetPsdRMSOfSampleEvents(int nrOfEvents, int startIndex)
+const std::pair<float,float> TubeData::GetPsdRMSOfSampleEvents(const std::pair <std::vector<float>, std::vector<float> >& psdSample)
 {
     std::pair<float,float> results(0,0);
     
-    // Take number of events from start index
-    std::vector<float> samplePsd0(nrOfEvents,0.0);
-    std::vector<float> samplePsd1(nrOfEvents,0.0);
-    for(int i=0;i<nrOfEvents;++i)
-    {
-        samplePsd0[i] =_channel_processedData.first.GetPsd(startIndex +i);
-        samplePsd1[i] =_channel_processedData.second.GetPsd(startIndex +i);
-    }
-    
-    results.first  = Utils::GetRMS<float>(samplePsd0);
-    results.second = Utils::GetRMS<float>(samplePsd1);
+    results.first  = Utils::GetRMS<float>(psdSample.first);
+    results.second = Utils::GetRMS<float>(psdSample.second);
     
     return results;
+}
+
+const std::vector<int> TubeData::GetEventIndices(int nrOfEvents)
+{
+    int index = -1;
+    std::vector<int> indices(nrOfEvents,0);
+    
+    for(int i=0;i<nrOfEvents;++i)
+        indices[i] = _rand.Rndm()*(_nEntries -1);
+    
+    return indices;
+}
+
+const std::pair< std::vector<float>, std::vector<float> > TubeData::GetContaminatedPsdSample(const std::vector<int>& indices,
+                                                                                             double level)
+{
+    std::pair< std::vector<float>, std::vector<float> > psdValues;
+    int nrOfEvents = static_cast<int>(indices.size());
+    
+    // take random number of events - the same for both channels in tube
+    // must be equal to or lower than total number of events
+    int nrOfBkgEvents = nrOfEvents+1;
+    while(nrOfBkgEvents > nrOfEvents)
+    {
+        nrOfBkgEvents = _rand.Poisson(nrOfEvents*level);
+    }
+    
+    // Get signal events
+    int nrOfSigEvents = nrOfEvents - nrOfBkgEvents;
+    std::vector<float> psdCh1(nrOfEvents,0.0);
+    std::vector<float> psdCh2(nrOfEvents,0.0);
+    for(int i=0;i<nrOfEvents;++i)
+    {
+        psdCh1[i] =_channel_processedData.first.GetPsd(indices[i]);
+        psdCh2[i] =_channel_processedData.second.GetPsd(indices[i]);
+    }
+    
+    psdValues.first = psdCh1;
+    psdValues.second = psdCh2;
+    
+    if(level == 0.0)return psdValues;
+    
+    if(_bkg_psd_hist1 == nullptr ||
+       _bkg_psd_hist2 == nullptr)
+        return psdValues;
+    
+    // Add background events
+    for(int i=0;i<nrOfBkgEvents;++i)
+    {
+        psdCh1[i] = _bkg_psd_hist1->GetRandom();
+        psdCh2[i] = _bkg_psd_hist2->GetRandom();
+    }
+    
+    psdValues.first = psdCh1;
+    psdValues.second = psdCh2;
+    
+    return psdValues;
 }
 
 const int TubeData::GetPoissonNumberOfEvents(int meanNrOfEvents)

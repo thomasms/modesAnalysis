@@ -23,8 +23,7 @@ void Manager::InitDataCards()
   _cards->AddDataCardString("saveDir", "./images");
   _cards->AddDataCardDouble("timeCutOff", 300.0);
   _cards->AddDataCardDouble("psdCut", 0.64);
-  _cards->AddDataCardDouble("contaminationUpperLevel", 0.20);
-  _cards->AddDataCardDouble("contaminationLowerLevel", 0.10);
+  _cards->AddDataCardDouble("contaminationLevel", 0.20);
   _cards->AddDataCardBool("showBackground", false);
   _cards->AddDataCardBool("showPeaks", false);
   _cards->AddDataCardBool("savePlots", false);
@@ -50,8 +49,7 @@ void Manager::LoadDataCards()
   _saveDir                  = _cards->fetchValueString("saveDir");
   _timeCutOff               = _cards->fetchValueDouble("timeCutOff");
   _psdCut                   = _cards->fetchValueDouble("psdCut");
-  _contaminationUpperLevel 	= _cards->fetchValueDouble("contaminationUpperLevel");
-  _contaminationLowerLevel 	= _cards->fetchValueDouble("contaminationLowerLevel");
+  _contaminationLevel 	    = _cards->fetchValueDouble("contaminationLevel");
   _showBackground           = _cards->fetchValueBool("showBackground");
   _showPeaks                = _cards->fetchValueBool("showPeaks");
   _savePlots                = _cards->fetchValueBool("savePlots");
@@ -104,6 +102,7 @@ void Manager::Process()
     _handler->SetMeanNumberOfEvents(_meanNoEvents);
     _handler->SetNumberOfExperiments(_experiments);
     _handler->SetUseRMS(_takeRMS);
+    _handler->SetContaminationLevel(_contaminationLevel);
     
     //Process data - process background first for contamination
     _handler->Process(_backgrTreeVtr,false,_timeCutOff);

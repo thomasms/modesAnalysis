@@ -18,7 +18,7 @@ public:
     TubeData(const ChannelData& channel0, const ChannelData& channel1, int id);
     ~TubeData();
     
-    void ProcessData(int meanNrOfEvents, int experiments, bool takeRMS=false);
+    void ProcessData(int meanNrOfEvents, int experiments, double contaminationLevel, bool takeRMS=false);
     
     void SetChannelBackgroundPsdHists(TH1F* psd1, TH1F* psd2);
     
@@ -34,19 +34,20 @@ public:
 
 private:
     
-    void ContaminateTube(int meanNrOfEvents, double level);
+    const std::vector<int> GetEventIndices(int nrOfEvents);
+    const std::pair< std::vector<float>, std::vector<float> > GetContaminatedPsdSample(const std::vector<int>& indices, double level);
     void SetEntries();
     void RemoveBadEvents();
-    void RunExperiments(int meanNrOfEvents, int experiments, bool takeRMS);
+    void RunExperiments(int meanNrOfEvents, int experiments, double contaminationLevel, bool takeRMS);
     const int GetPoissonNumberOfEvents(int meanNrOfEvents);
-    const std::pair<float,float> GetQLongMeanOfSampleEvents(int nrOfEvents, int startIndex);
-    const std::pair<float,float> GetQLongRMSOfSampleEvents(int nrOfEvents, int startIndex);
-    const std::pair<float,float> GetQShortMeanOfSampleEvents(int nrOfEvents, int startIndex);
-    const std::pair<float,float> GetQShortRMSOfSampleEvents(int nrOfEvents, int startIndex);
-    const std::pair<float,float> GetTimeTagMeanOfSampleEvents(int nrOfEvents, int startIndex);
-    const std::pair<float,float> GetTimeTagRMSOfSampleEvents(int nrOfEvents, int startIndex);
-    const std::pair<float,float> GetPsdMeanOfSampleEvents(int nrOfEvents, int startIndex);
-    const std::pair<float,float> GetPsdRMSOfSampleEvents(int nrOfEvents, int startIndex);
+    const std::pair<float,float> GetQLongMeanOfSampleEvents(const std::vector<int>& indices);
+    const std::pair<float,float> GetQLongRMSOfSampleEvents(const std::vector<int>& indices);
+    const std::pair<float,float> GetQShortMeanOfSampleEvents(const std::vector<int>& indices);
+    const std::pair<float,float> GetQShortRMSOfSampleEvents(const std::vector<int>& indices);
+    const std::pair<float,float> GetTimeTagMeanOfSampleEvents(const std::vector<int>& indices);
+    const std::pair<float,float> GetTimeTagRMSOfSampleEvents(const std::vector<int>& indices);
+    const std::pair<float,float> GetPsdMeanOfSampleEvents(const std::pair< std::vector<float>, std::vector<float> >& psdValues);
+    const std::pair<float,float> GetPsdRMSOfSampleEvents(const std::pair< std::vector<float>, std::vector<float> >& psdValues);
 
 private:
     

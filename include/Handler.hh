@@ -49,6 +49,7 @@ public:
     void SetMeanNumberOfEvents(int nrOfEvents)      {_meanNrOfEvents = nrOfEvents;};
     void SetNumberOfExperiments(int experiments)    {_experiments = experiments;};
     void SetUseRMS(bool useRMS)                     {_takeRMS = useRMS;};
+    void SetContaminationLevel(double level)        {_contaminationLevel = level;};
       
     EventParameters GetParameters(int event);
     EventData GetData(int event);
@@ -72,6 +73,7 @@ private:
     int _meanNrOfEvents;
     int _experiments;
     bool _takeRMS;
+    double _contaminationLevel;
     
     //histograms
     int _binningFactor;

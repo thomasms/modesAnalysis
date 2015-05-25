@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 
+#include "TRandom3.h"
 #include "TTree.h"
 #include "TBranch.h"
 
@@ -32,6 +33,8 @@ public:
     const float GetQshort(int index) const;
     const float GetTimeTag(int index) const;
     
+    const std::vector<float> GetSamplePsdValues(int sampleSize);
+    
     void SetEntries(int entries);
     void SetPSDValues(const std::vector<float>& values) {_psdValues = values;};
     void SetQlongValues(const std::vector<float>& values) {_qlongValues = values;};
@@ -45,6 +48,8 @@ private:
     
     int _channelId;
     int _nEntries;
+    
+    TRandom3 _rand;
     
     std::vector<float> _psdValues;
     std::vector<float> _qlongValues;

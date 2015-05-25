@@ -80,7 +80,7 @@ public:
   void SetChannelSignalEntries(const std::vector<double>& entries) {_sigEntries = entries;};
     
   const double GetChannelBackgroundEntries(int channel) {return _bkgEntries[channel];};
-  void SetChannelBeckgroundEntries(const std::vector<double>& entries) {_bkgEntries = entries;};
+  void SetChannelBackgroundEntries(const std::vector<double>& entries) {_bkgEntries = entries;};
     
 private:
   TString signalName, backgroundName;

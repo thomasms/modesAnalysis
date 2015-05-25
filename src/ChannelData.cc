@@ -2,10 +2,14 @@
 
 ChannelData::ChannelData() : _channelId(-1), _nEntries(0)
 {
+    //for TRandom3 this will change the seed every call to this
+    _rand.SetSeed(0);
 }
 
 ChannelData::ChannelData(int channel) : _channelId(channel), _nEntries(0)
 {
+    //for TRandom3 this will change the seed every call to this
+    _rand.SetSeed(0);
 }
 
 ChannelData::~ChannelData()
@@ -80,6 +84,19 @@ void ChannelData::SetEntries(int entries)
     _qshortValues.resize(entries);
     _timetagValues.resize(entries);
     _badEventFlags.resize(entries);
+}
+
+const std::vector<float> ChannelData::GetSamplePsdValues(int sampleSize)
+{
+    int index = -1;
+    std::vector<float> psdValues( sampleSize, 0.0);
+    for(int i=0;i<sampleSize;++i)
+    {
+        index = _rand.Rndm()*(_psdValues.size() -1);
+        psdValues[i] = _psdValues[index];
+    }
+    
+    return psdValues;
 }
 
 const bool ChannelData::IsBadEvent(int index) const

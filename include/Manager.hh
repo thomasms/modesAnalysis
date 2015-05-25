@@ -57,8 +57,7 @@ public:
     const TString GetBackgdFileName()  	{return _backgroundFile;};
     const double GetCutOffTime()	    {return _timeCutOff;};
     const double GetPSDCut()            {return _psdCut;};
-    const double GetContamUpperLevel()	{return _contaminationUpperLevel;};
-    const double GetContamLowerLevel()	{return _contaminationLowerLevel;};
+    const double GetContaminationLevel(){return _contaminationLevel;};
     const int GetNumberOfFiles()        {return _files;};
     const int GetNumberOfTubes()        {return _tubes;};
     const int GetNumberOfExp()          {return _experiments;};
@@ -90,7 +89,7 @@ protected:
   
     //input parameters
     TString _signalFile,_backgroundFile,_signalName,_backgroundName,_saveDir;
-    double _timeCutOff,_psdCut,_contaminationUpperLevel,_contaminationLowerLevel;
+    double _timeCutOff,_psdCut,_contaminationLevel;
     bool _savePlots,_logPlot,_showBackground, _showPeaks, _takeRMS;
     int _files,_experiments,_meanNoEvents,_tubes,_binning, _channel;
     double _temperature,_pressure,_activity,_distance;
